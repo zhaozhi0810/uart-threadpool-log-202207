@@ -232,13 +232,17 @@ int PortSend(int fdcom, char *data, unsigned char datalen)
      
     do{    
     	ret =  write(fdcom, data+len, datalen-len);	
-    	if(ret < 0)   //读取失败
-			break;
+    	if(ret < 0)   //发送失败
+		{
+			return -1;
+		}
 		len += ret;	//实际写入的长度
 		
 		if(len != datalen)
 			usleep(50000);
 	}while(len != datalen);
+
+	return 0;
 }
 
 

@@ -32,6 +32,7 @@ enum API_CMD_types{
 	eAPI_LEDGETALL_CMD,      //获取所有的led
 	eAPI_BTNGET_CMD,         //获取按键
 	eAPI_BTNEVENT_CMD,       //等待按键事件
+	eAPI_LCDONOFF_CMD,       //lcd开启关闭事件
 };
 
 

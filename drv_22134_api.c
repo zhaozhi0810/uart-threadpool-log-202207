@@ -67,6 +67,60 @@ void set_print_debug(int val)
 static int CoreBoardInit = 0;   //初始化了吗？初始化成功为1，失败为-1。
 
 
+
+//api发送数据给服务器，并且等待服务器应答，超时时间1s
+//第二个参数可以用于返回数据，无数据时可以为NULL
+static int api_send_and_waitack(int cmd,int param1,int *param2)
+{
+	msgq_t msgbuf;  //用于应答
+	int ret;	
+	msgbuf.types = TYPE_API_SENDTO_SERVER;  //发送的信息类型
+	msgbuf.cmd = cmd;      //结构体赋值
+	msgbuf.param1 = param1;
+	if(param2)
+		msgbuf.param2 = *param2;
+	else //空指针
+		msgbuf.param2 = 0;
+	msgbuf.ret = 0;   //一般没有使用
+//	printf("DEBUG: cmd = %d\n",cmd);
+	//3.做出应答
+	ret = msgq_send(TYPE_API_RECFROM_SERVER+cmd,&msgbuf,20); //数据发出后，需要等待 20表示1s
+	if(0!= ret)
+	{		
+		printf("error : msgq_send ,ret = %d\n",ret);
+		return ret;
+	} 
+//	printf("DEBUG: msgq_send ok\n");
+	//判断是否有返回数据
+	if(param2 && (msgbuf.ret>0))  //ret >0 表示有数据回来,小于0表示出错，等于0表示应答
+		*param2 = msgbuf.param1;   //用param1返回数据
+
+	return 0;	
+}
+
+static int __setlcdbrt(int nBrtVal)
+{
+	char data[8];
+
+	if(nBrtVal>= 0 && nBrtVal <= 255)
+	{
+		snprintf(data,sizeof data,"%d",nBrtVal);  //数字转字符串
+		FILE *fp = fopen("/sys/class/backlight/backlight/brightness","r+");
+		if(fp == NULL)
+		{
+			printf("ERROR : open /sys/class/backlight/backlight/brightness\n");
+			return -1;
+		}
+		fputs(data,fp);
+
+		fclose(fp);	
+		return 0;	
+	}
+
+	return -1;  //数值超标
+}
+
+
 //核心板初始化函数
 //-1：初始化失败
 //0：初始化成功
@@ -190,16 +244,39 @@ void drvDisableUSB1(void)
 	//nothing todo 2022-07-27
 }
 
-//打开屏幕
+//打开屏幕,由于单片机没法控制lcd的开启关闭，现在只能打开pwm
 void drvEnableLcdScreen(void)
 {
+#if 1
+	__setlcdbrt(200);
+#else	
+	int param = 1; //打开屏幕
+	if(assert_init())  //未初始化
+		return;
 
+	if(api_send_and_waitack(eAPI_LCDONOFF_CMD,1,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	{
+		printf("error : drvEnableLcdScreen\n");
+	}
+#endif
 }
 
-//关闭屏幕
+//关闭屏幕，由于单片机没法控制lcd的开启关闭，现在只能打开pwm
 void drvDisableLcdScreen(void)
 {
-
+#if 1
+	__setlcdbrt(0);
+#else	
+	int param = 0; //关闭屏幕
+	if(assert_init())  //未初始化
+		return;
+	printf("debug : drvDisableLcdScreen \n");
+	if(api_send_and_waitack(eAPI_LCDONOFF_CMD,0,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	{
+		printf("error : drvDisableLcdScreen\n");
+	}
+	printf("debug : drvDisableLcdScreen ok\n");
+#endif
 }
 
 //使能touch module
@@ -226,8 +303,8 @@ void drvDisableTouchModule(void)
  */
 int drvGetLCDType(void)
 {
-	
-	return 0;
+	return 3;   //5寸屏
+//	return 0;
 }
 
 //获取键盘类型
@@ -324,27 +401,7 @@ void drvSetLedBrt(int nBrtVal)
 }
 
 
-static int __setlcdbrt(int nBrtVal)
-{
-	char data[8];
 
-	if(nBrtVal>= 0 && nBrtVal <= 255)
-	{
-		snprintf(data,sizeof data,"%d",nBrtVal);  //数字转字符串
-		FILE *fp = fopen("/sys/class/backlight/backlight/brightness","r+");
-		if(fp == NULL)
-		{
-			printf("ERROR : open /sys/class/backlight/backlight/brightness\n");
-			return -1;
-		}
-		fputs(data,fp);
-
-		fclose(fp);	
-		return 0;	
-	}
-
-	return -1;  //数值超标
-}
 
 
 //设置屏幕亮度  参数范围为[0,0xff]
@@ -358,35 +415,7 @@ void drvSetLcdBrt(int nBrtVal)
 }
 
 
-//api发送数据给服务器，并且等待服务器应答，超时时间1s
-//第二个参数可以用于返回数据，无数据时可以为NULL
-static int api_send_and_waitack(int cmd,int param1,int *param2)
-{
-	msgq_t msgbuf;  //用于应答
-	int ret;	
-	msgbuf.types = TYPE_API_SENDTO_SERVER;  //发送的信息类型
-	msgbuf.cmd = cmd;      //结构体赋值
-	msgbuf.param1 = param1;
-	if(param2)
-		msgbuf.param2 = *param2;
-	else //空指针
-		msgbuf.param2 = 0;
-	msgbuf.ret = 0;   //一般没有使用
 
-	//3.做出应答
-	ret = msgq_send(TYPE_API_RECFROM_SERVER+cmd,&msgbuf,20); //数据发出后，需要等待 20表示1s
-	if(0!= ret)
-	{		
-		printf("error : msgq_send ,ret = %d\n",ret);
-		return ret;
-	} 
-
-	//判断是否有返回数据
-	if(param2 && msgbuf.ret)  //ret 不为0表示有数据回来
-		*param2 = msgbuf.param1;   //用param1返回数据
-
-	return 0;	
-}
 
 
 //点亮对应的键灯，单片机命令
@@ -424,7 +453,7 @@ void drvLightAllLED(void)
 	if(assert_init())  //未初始化
 		return;
 
-	if(api_send_and_waitack(eAPI_LEDSETALL_CMD,0,&param))  //发送的第二个参数无意义，第三个表示点亮还是熄灭
+	if(api_send_and_waitack(eAPI_LEDSETALL_CMD,1,&param))  //发送的第二个参数无意义，第三个表示点亮还是熄灭
 	{
 		printf("error : drvLightAllLED \n");
 	}

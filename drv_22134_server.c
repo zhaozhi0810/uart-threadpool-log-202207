@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-07-28 09:29:25
+* @Last Modified time: 2022-07-28 16:43:37
 */
 
 
@@ -37,11 +37,30 @@
 #define TYPE_SENDTO_API 234   //发    必须跟api是反的！！！！，不要随意改动！！！！
 #define TYPE_RECVFROM_API 678   //收
 
-const char* g_build_time_str = "Buildtime :"__DATE__" "__TIME__;   //获得编译时间
+static const char* g_build_time_str = "Buildtime :"__DATE__" "__TIME__;   //获得编译时间
 //全局变量，数据应该保持实时刷新。
 struct threadpool* pool;  //线程池
 
+//mcu 自己的协议 相当于把协议又翻译一次
+//
+//
+//
+// static int set_mcu_cmd(int cmd,int param1,int param2)
+// {
+// 	unsigned char mcu_cmd_buf[2];
+// 	switch(cmd)
+// 	{
 
+		
+// 	}	
+		
+	
+
+
+// 	mcu_cmd_buf[1] = 1;  //命令对应的参数
+
+// 	send_mcu_data(mcu_cmd_buf);
+// }
 
 
 
@@ -49,12 +68,55 @@ struct threadpool* pool;  //线程池
 //直接回复全局数据
 static void answer_to_api(msgq_t *pmsgbuf)
 {
+	unsigned char mcu_cmd_buf[2];
 	msgq_t msgbuf;  //用于应答
 		
 	msgbuf.types = TYPE_SENDTO_API+pmsgbuf->cmd;  //发送的信息类型
 	msgbuf.cmd = pmsgbuf->cmd;
-	msgbuf.ret = 0;
+	msgbuf.ret = 0;  //ret 等于0表示不返回有效数据（只包含应答），等于1，表示有数据返回
 
+
+	printf("debug:answer_to_api cmd = %d param1 = %d param2 = %d\n",
+			pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2);
+
+	//1.	解析数据
+	switch(pmsgbuf->cmd)
+	{
+#if 1
+		/***************************************************/  //设置需要等待完成动作，单片机通信后等待应答
+		case eAPI_LEDSET_CMD: //设置led
+			if(pmsgbuf->param2) //非零表示点亮				
+				mcu_cmd_buf[0] = eMCU_LED_SETON_TYPE;  //设置led	 on
+			else
+				mcu_cmd_buf[0] = eMCU_LED_SETOFF_TYPE;  //设置led off
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //哪一个led
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			break;
+		case eAPI_LCDONOFF_CMD:  //lcd 打开关闭控制							
+			mcu_cmd_buf[0] = eMCU_LCD_SETONOFF_TYPE;  //设置lcd 打开或者关闭			
+			mcu_cmd_buf[1] = pmsgbuf->param2;   //打开1或者关闭0
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			break;
+
+		case eAPI_LEDSETALL_CMD:      //设置所有的led	
+			mcu_cmd_buf[0] = eMCU_LEDSETALL_TYPE;  //设置所有的led 打开或者关闭			
+			mcu_cmd_buf[1] = pmsgbuf->param2;   //打开1或者关闭0
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			break;
+		case eAPI_LEDGET_CMD: 		  //led 状态获取	
+			mcu_cmd_buf[0] = eMCU_LED_STATUS_TYPE;  //led 状态获取				
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //获取哪个灯的状态
+			if(0 == send_mcu_data(mcu_cmd_buf))  //返回值为0，表示收到了数据
+			{//获得mcu的数据？？
+				msgbuf.ret = 1; //表示又数据返回
+				msgbuf.param1 = mcu_cmd_buf[0];
+			}
+			break;
+		default:
+			msgbuf.ret = -1;   //不能是别的命令
+		break;
+#endif		
+	}	
 
 	//3.做出应答
 	if(0!= msgq_send_ack(&msgbuf))   //应答发出后，不需要等待
@@ -96,20 +158,14 @@ static void* msg_connect(void * data)
 		if(ret == 0)   //收到信息，打印出来
 		{
 			//调试打印						
-			//判断消息来自于api还是snmp
-			if(pmsgbuf->cmd < 10 /*eAPI_MAX_CMD*/ )
 			{				
-			//	printf(PRINT_APITOCPU"type = %ld cmd = %d b = %d c = %d rt = %d\n",pmsgbuf->types,pmsgbuf->cmd,pmsgbuf->b,pmsgbuf->c,pmsgbuf->ret);
+				printf("type = %ld cmd = %d b = %d c = %d rt = %d\n",pmsgbuf->types,pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2,pmsgbuf->ret);
 				threadpool_add_job(pool,api_answer_thread,pmsgbuf);
 			}
-			// else  //使用snmp处理
-			// {
-			// 	printf(PRINT_SNMPDTOCPU"type = %ld cmd = %d b = %d c = %d rt = %d\n",pmsgbuf->types,pmsgbuf->cmd,pmsgbuf->b,pmsgbuf->c,pmsgbuf->ret);
-			// 	threadpool_add_job(pool,snmp_answer_thread,pmsgbuf);  //snmp的函数
-			// }
 		}
 		else
 		{
+			printf("ERROR: msgq_recv\n");
 			if(errno != EINTR)  //捕获到信号
 			{
 				printf("error msgq error!\n");
@@ -147,8 +203,8 @@ int main(int argc, char *argv[])
 	}
 
 		//日志记录
-	if(0 !=log_init())  //自动开了线程
-		printf("ERROR: log thread init!!");
+	// if(0 !=log_init())  //自动开了线程
+	// 	printf("ERROR: log thread init!!");
 
 	//线程池初始化
 	pool = threadpool_init(4,6);  //初始有多少线程，最多有多少任务排队

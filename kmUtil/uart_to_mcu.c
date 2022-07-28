@@ -35,18 +35,20 @@ static int uinp_fd = -1;
 static struct uinput_user_dev uinp; // uInput device structure 
 //static uunsigned int key_leds_val = 0;
 
-static 	int p_opt = 0;   //是否要打印出接收到的字符？
+static 	int p_opt = 0;   //脢脟路帽脪陋麓貌脫隆鲁枚陆脫脢脮碌陆碌脛脳脰路没拢驴
 static 	int uart_fd;
 
+static volatile	unsigned short uart_recv_flag = 0;   //麓庐驴脷陆脫脢脮卤锚脰戮拢卢脫脙脫脷碌楼脝卢禄煤碌脛脫娄麓冒拢卢赂脽8脦禄卤铆脢戮脳麓脤卢拢卢碌脥8脦禄卤铆脢戮脙眉脕卯
 
-//#define FRAME_LENGHT (sizeof(com_frame_t)+1)    //数据帧的字节数
+
+//#define FRAME_LENGHT (sizeof(com_frame_t)+1)    //脢媒戮脻脰隆碌脛脳脰陆脷脢媒
+#define FRAME_HEAD 0xa5   //脳垄脪芒脫毛碌楼脝卢禄煤卤拢鲁脰脪禄脰脗
+
+
+
+#define COM_DATLEN 4 //麓庐驴脷碌脛脢媒戮脻鲁陇露脠脦陋4赂枚脳脰陆脷 0x5f + dat1 + dat2 + checksum
 #define FRAME_HEAD 0xa5
-
-
-
-#define COM_DATLEN 4 //串口的数据长度为4个字节 0x5f + dat1 + dat2 + checksum
-#define FRAME_HEAD 0xa5
-static unsigned char com_recv_data[COM_DATLEN*2];   //接收缓存
+static unsigned char com_recv_data[COM_DATLEN*2];   //陆脫脢脮禄潞麓忙
 
 
 const int key_map[]={KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5, KEY_F6, 
@@ -80,7 +82,7 @@ KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_KPENTER, KEY_KPPLUS, KEY_KPMINUS};
 
 
 
-static void send_a_button_ievent(char VK, char VKState)  //1按下， 0弹起
+static void send_a_button_ievent(char VK, char VKState)  //1掳麓脧脗拢卢 0碌炉脝冒
 { 
 	// Report BUTTON CLICK - PRESS event 
 	ssize_t ret;
@@ -134,16 +136,16 @@ static int setup_uinput_device( void )
 	uinp.id.bustype = BUS_USB;
 	
 	// Setup the uinput device 
-	ioctl (uinp_fd, UI_SET_EVBIT, EV_KEY); //按键按下
-	ioctl (uinp_fd, UI_SET_EVBIT, EV_REP); //按键释放
-	ioctl (uinp_fd, UI_SET_EVBIT, EV_SYN); //同步事件
-//	ioctl (uinp_fd, UI_SET_EVBIT, EV_LED); //LED事件
-#if 0  //鼠标事件
+	ioctl (uinp_fd, UI_SET_EVBIT, EV_KEY); //掳麓录眉掳麓脧脗
+	ioctl (uinp_fd, UI_SET_EVBIT, EV_REP); //掳麓录眉脢脥路脜
+	ioctl (uinp_fd, UI_SET_EVBIT, EV_SYN); //脥卢虏陆脢脗录镁
+//	ioctl (uinp_fd, UI_SET_EVBIT, EV_LED); //LED脢脗录镁
+#if 0  //脢贸卤锚脢脗录镁
 	ioctl(uinp_fd, UI_SET_EVBIT, EV_REL); 
    //ioctl(uinp_fd , UI_SET_EVBIT, EV_ABS);
 	ioctl(uinp_fd, UI_SET_RELBIT, REL_X); 
 	ioctl(uinp_fd, UI_SET_RELBIT, REL_Y);
-	ioctl(uinp_fd, UI_SET_RELBIT, REL_WHEEL); //滚轮
+	ioctl(uinp_fd, UI_SET_RELBIT, REL_WHEEL); //鹿枚脗脰
 #if 0
 	ioctl(uinp_fd , UI_SET_ABSBIT, ABS_X);
 	ioctl(uinp_fd , UI_SET_ABSBIT, ABS_Y);
@@ -190,16 +192,30 @@ static int setup_uinput_device( void )
 
 
 
-//串口消息处理
+//麓庐驴脷脧没脧垄麓娄脌铆
 static void com_message_handle(void)
 {		
-	if(com_recv_data[1]>0 && com_recv_data[1] < 37)   //按键值
+	if(com_recv_data[1]>0 && com_recv_data[1] < 37)   //掳麓录眉脰碌
 	{
 		printf("key = %d %s\n",com_recv_data[1],com_recv_data[2]?"press":"release");
 		send_a_button_ievent(key_map[com_recv_data[1]-1], com_recv_data[2]);
 	}
-	else  //其他定义的接口数据
+	else  //脝盲脣没露篓脪氓碌脛陆脫驴脷脢媒戮脻
 	{
+		switch(com_recv_data[1])
+		{
+			case eMCU_LED_SETON_TYPE: //脡猫脰脙led ON			
+			case eMCU_LED_SETOFF_TYPE: //脡猫脰脙led OFF		
+			case eMCU_LCD_SETONOFF_TYPE:  //脡猫脰脙lcd 麓貌驴陋禄貌脮脽鹿脴卤脮		
+			case eMCU_LEDSETALL_TYPE:  //脡猫脰脙脣霉脫脨碌脛led 麓貌驴陋禄貌脮脽鹿脴卤脮			
+			case eMCU_LED_STATUS_TYPE:		  //led 脳麓脤卢禄帽脠隆			
+				uart_recv_flag = com_recv_data[1] | (com_recv_data[2] <<8);  //赂脽8脦禄卤铆脢戮脳麓脤卢		
+				break;
+			default:
+				uart_recv_flag = 0;
+				printf("ERROR:unknown uart recv\n");
+			break;
+		}
 		printf("com_recv_data[1] = %d com_recv_data[2] = %d\n",com_recv_data[1],com_recv_data[2]);
 	}
 }
@@ -220,7 +236,7 @@ static unsigned char checksum(unsigned char *buf, unsigned char len)
 
 
 
-//校验数据
+//脨拢脩茅脢媒戮脻
 static unsigned int verify_data(unsigned char *data,unsigned char len)
 {
 	unsigned char check;
@@ -233,10 +249,10 @@ static unsigned int verify_data(unsigned char *data,unsigned char len)
 		printf("data[%d] = %x \n",i,data[i]);
 	printf("\n\n");
 #endif	
-	//读取原数据中的校验值
+	//露脕脠隆脭颅脢媒戮脻脰脨碌脛脨拢脩茅脰碌
 	check = data[len - 1];
 	
-	//重新计算校验值
+	//脰脴脨脗录脝脣茫脨拢脩茅脰碌
 	if(check == checksum(data,len - 1))
 		ret = 0;
 	
@@ -251,55 +267,55 @@ static void ProcRecvKeyCmd(void)
 {
 //	unsigned int err;
 	unsigned char length,i,j;
-	static unsigned char datalen =COM_DATLEN,offset = 0;  //这两个变量用于帧错误的情况
-	char ispt = 0;  //收到的数据需要打印吗
+	static unsigned char datalen =COM_DATLEN,offset = 0;  //脮芒脕陆赂枚卤盲脕驴脫脙脫脷脰隆麓铆脦贸碌脛脟茅驴枚
+	char ispt = 0;  //脢脮碌陆碌脛脢媒戮脻脨猫脪陋麓貌脫隆脗冒
 
 
-	while(1)  //考虑到可能接收到多帧要处理的情况
+	while(1)  //驴录脗脟碌陆驴脡脛脺陆脫脢脮碌陆露脿脰隆脪陋麓娄脌铆碌脛脟茅驴枚
 	{		
 		length = queue_length(&keyCmdQueue);	
-		if(length < datalen)   //（包括帧头）小于4个字节，不是完整的一帧
+		if(length < datalen)   //拢篓掳眉脌篓脰隆脥路拢漏脨隆脫脷4赂枚脳脰陆脷拢卢虏禄脢脟脥锚脮没碌脛脪禄脰隆
 		{	
-			//com3_answer_3A3000(RECV_NO);   //应答接收到的长度不对
-			return ;   //继续等待
+			//com3_answer_3A3000(RECV_NO);   //脫娄麓冒陆脫脢脮碌陆碌脛鲁陇露脠虏禄露脭
+			return ;   //录脤脨酶碌脠麓媒
 		}	
-		length = datalen;   //计算需要读出的字节数
+		length = datalen;   //录脝脣茫脨猫脪陋露脕鲁枚碌脛脳脰陆脷脢媒
 		for(i=0;i<length;i++)
 		{
-			//这里不判断错误了，前面已经检测确实有这么多字节。
-			out_queue(&keyCmdQueue,com_recv_data+i+offset) ;  //com_data 空出1个字节，为了兼容之前的校验和算法，及数据解析算法
+			//脮芒脌茂虏禄脜脨露脧麓铆脦贸脕脣拢卢脟掳脙忙脪脩戮颅录矛虏芒脠路脢碌脫脨脮芒脙麓露脿脳脰陆脷隆拢
+			out_queue(&keyCmdQueue,com_recv_data+i+offset) ;  //com_data 驴脮鲁枚1赂枚脳脰陆脷拢卢脦陋脕脣录忙脠脻脰庐脟掳碌脛脨拢脩茅潞脥脣茫路篓拢卢录掳脢媒戮脻陆芒脦枚脣茫路篓
 			if(ispt)
 				printf("com_recv_data[%d] = %x \n",i,com_recv_data[i+offset]);
 		}
-	//	com3_data[0] = FRAME_HEAD;  //加入帧头进行校验和计算
-		if((com_recv_data[0] == FRAME_HEAD) && (0 == verify_data(com_recv_data,COM_DATLEN)))   //第二参数是数据总长度，包括校验和共7个字节
+	//	com3_data[0] = FRAME_HEAD;  //录脫脠毛脰隆脥路陆酶脨脨脨拢脩茅潞脥录脝脣茫
+		if((com_recv_data[0] == FRAME_HEAD) && (0 == verify_data(com_recv_data,COM_DATLEN)))   //碌脷露镁虏脦脢媒脢脟脢媒戮脻脳脺鲁陇露脠拢卢掳眉脌篓脨拢脩茅潞脥鹿虏7赂枚脳脰陆脷
 		{
-			//校验和正确。
+			//脨拢脩茅潞脥脮媒脠路隆拢
 			//com3_answer_3A3000(RECV_OK);
 			com_message_handle();		
 		}	
-		else  //校验和不正确，可能是帧有错误。
+		else  //脨拢脩茅潞脥虏禄脮媒脠路拢卢驴脡脛脺脢脟脰隆脫脨麓铆脦贸隆拢
 		{
-			for(i=1;i<COM_DATLEN;i++)   //前面的判断出问题，考虑是帧错误，寻找下一个帧头！！！
+			for(i=1;i<COM_DATLEN;i++)   //脟掳脙忙碌脛脜脨露脧鲁枚脦脢脤芒拢卢驴录脗脟脢脟脰隆麓铆脦贸拢卢脩掳脮脪脧脗脪禄赂枚脰隆脥路拢隆拢隆拢隆
 			{
-				if(com_recv_data[i] == FRAME_HEAD)   //中间找到一个帧头
+				if(com_recv_data[i] == FRAME_HEAD)   //脰脨录盲脮脪碌陆脪禄赂枚脰隆脥路
 				{
 					break;
 				}
 			}		
-			if(i != COM_DATLEN) //在数据中间找到帧头！！！
+			if(i != COM_DATLEN) //脭脷脢媒戮脻脰脨录盲脮脪碌陆脰隆脥路拢隆拢隆拢隆
 			{
-				datalen = i;   //下一次需要读的字节数
-				offset = COM_DATLEN-i;  //存储的偏移位置的计算
+				datalen = i;   //脧脗脪禄麓脦脨猫脪陋露脕碌脛脳脰陆脷脢媒
+				offset = COM_DATLEN-i;  //麓忙麓垄碌脛脝芦脪脝脦禄脰脙碌脛录脝脣茫
 
-				for(j=0;i<COM_DATLEN;i++,j++)   //有可能帧头不对，所以第一个字节还是要拷贝一下
+				for(j=0;i<COM_DATLEN;i++,j++)   //脫脨驴脡脛脺脰隆脥路虏禄露脭拢卢脣霉脪脭碌脷脪禄赂枚脳脰陆脷禄鹿脢脟脪陋驴陆卤麓脪禄脧脗
 				{
-					com_recv_data[j] = com_recv_data[i];   //把剩下的拷贝过去
+					com_recv_data[j] = com_recv_data[i];   //掳脩脢拢脧脗碌脛驴陆卤麓鹿媒脠楼
 				}
 			}
-			else  //在数据中间没有找到帧头
+			else  //脭脷脢媒戮脻脰脨录盲脙禄脫脨脮脪碌陆脰隆脥路
 			{
-				datalen = COM_DATLEN;  //	下一次需要读的字节数
+				datalen = COM_DATLEN;  //	脧脗脪禄麓脦脨猫脪陋露脕碌脛脳脰陆脷脢媒
 				offset = 0;
 			}
 		}	
@@ -331,7 +347,7 @@ static void* info_recv_proc_func(void)
 				printf("Error, cann't add queue to keyCmdQueue\n");	
 			}
 		
-			//处理接收的消息
+			//麓娄脌铆陆脫脢脮碌脛脧没脧垄
 			ProcRecvKeyCmd();
 		}	
 	}//while(1)
@@ -340,12 +356,12 @@ static void* info_recv_proc_func(void)
 
 
 
-//负责接收数据的线程
+//赂潞脭冒陆脫脢脮脢媒戮脻碌脛脧脽鲁脤
 /*
- * arg 传出参数，串口收到数据，要修改全局变量，所以arg指向全局数据结构
+ * arg 麓芦鲁枚虏脦脢媒拢卢麓庐驴脷脢脮碌陆脢媒戮脻拢卢脪陋脨脼赂脛脠芦戮脰卤盲脕驴拢卢脣霉脪脭arg脰赂脧貌脠芦戮脰脢媒戮脻陆谩鹿鹿
  * 
- * 返回值：
- * 	根据线程函数定义，无意义，该函数不返回！！！！
+ * 路碌禄脴脰碌拢潞
+ * 	赂霉戮脻脧脽鲁脤潞炉脢媒露篓脪氓拢卢脦脼脪芒脪氓拢卢赂脙潞炉脢媒虏禄路碌禄脴拢隆拢隆拢隆拢隆
  * 
  * */
 void* mcu_recvSerial_thread(void* arg)
@@ -360,33 +376,60 @@ void* mcu_recvSerial_thread(void* arg)
 
 
 
-//发送数据，不由单独的线程处理了。data只需要包含数据类型和数据。头部和crc由该函数完成。
+//路垄脣脥脢媒戮脻拢卢虏禄脫脡碌楼露脌碌脛脧脽鲁脤麓娄脌铆脕脣隆拢data脰禄脨猫脪陋掳眉潞卢脢媒戮脻脌脿脨脥潞脥脢媒戮脻隆拢脥路虏驴潞脥crc脫脡赂脙潞炉脢媒脥锚鲁脡隆拢
 /*
- * data 用于发送的数据，不需要包括帧头和校验和，只要包括数据类型和数据（共2个字节）
- * 返回值
- * 	0表示成功，其他表示失败
+ * data 脫脙脫脷路垄脣脥碌脛脢媒戮脻拢卢虏禄脨猫脪陋掳眉脌篓脰隆脥路潞脥脨拢脩茅潞脥拢卢脰禄脪陋掳眉脌篓脢媒戮脻脌脿脨脥潞脥脢媒戮脻拢篓鹿虏2赂枚脳脰陆脷拢漏
+ * 路碌禄脴脰碌
+ * 	0卤铆脢戮鲁脡鹿娄拢卢脝盲脣没卤铆脢戮脢搂掳脺
  * */
 int send_mcu_data(const void* data)
 {	
 	unsigned char buf[8];  	
 	int i;
 	
-	buf[0] = FRAME_HEAD;  //帧头	
-	memcpy(buf+1,data,sizeof(com_frame_t)-1);    //拷贝
+	buf[0] = FRAME_HEAD;  //脰隆脥路	
+	memcpy(buf+1,data,sizeof(com_frame_t)-1);    //驴陆卤麓
 
-	//crc重新计算
-	buf[sizeof(com_frame_t)] = checksum(buf,sizeof(com_frame_t));  //校验和，存储在第7个字节上，数组下标6.
+	//crc脰脴脨脗录脝脣茫
+	buf[sizeof(com_frame_t)] = checksum(buf,sizeof(com_frame_t));  //脨拢脩茅潞脥拢卢麓忙麓垄脭脷碌脷7赂枚脳脰陆脷脡脧拢卢脢媒脳茅脧脗卤锚6.
 
 //	printf(PRINT_CPUTOMCU);
 	// for(i=0;i<8;i++)
 	// 	printf("%#x ",buf[i]);
 	// printf("\n");
-	
-	if(PortSend(uart_fd, buf, sizeof(com_frame_t)+1) == 0)   //com_frame_t并没有包含数据头，所以加1个字节	
+	uart_recv_flag = 0;  //脟氓脌铆陆脫脢脮卤锚脰戮
+	if(PortSend(uart_fd, buf, sizeof(com_frame_t)+1) == 0)   //com_frame_t虏垄脙禄脫脨掳眉潞卢脢媒戮脻脥路拢卢脣霉脪脭录脫1赂枚脳脰陆脷	
 	{
-		//发送成功，等待应答
-		return 0;   //暂时没有等待应答2021-11-23
+		i = 0;
+		//路垄脣脥鲁脡鹿娄拢卢碌脠麓媒脫娄麓冒
+		while(uart_recv_flag == 0)
+		{
+			usleep(100000);   //100ms
+			i++;
+			
+			if(i>10)  //绛夊緟1s
+			{
+				uart_recv_flag = 0;  //瓒呮椂娓呴浂
+				printf("Error, send_mcu_data recv timeout !!cmd = %d\n",((unsigned char*)data)[0]);	
+				return -1;
+			}
+		}
+				
+		if((uart_recv_flag &0xff) == ((unsigned char*)data)[0])   //路垄脣脥碌脛脙眉脕卯脫毛路碌禄脴碌脛脙眉脕卯脧脿脥卢
+		{
+			((unsigned char*)data)[0] = uart_recv_flag>>8;   //赂脽8脦禄卤铆脢戮脳麓脤卢拢卢掳脩脳麓脤卢脰碌路碌禄脴禄脴脠楼
+			uart_recv_flag = 0;  //脟氓脕茫陆脫脢脮卤锚脰戮
+		}
+		else
+		{
+			printf("Error, send_mcu_data recv uart_recv_flag =%d != cmd = %d\n",uart_recv_flag,((unsigned char*)data)[0]);
+			uart_recv_flag = 0;  //脟氓脕茫陆脫脢脮卤锚脰戮
+			return -1;	
+		}	
+				
+		return 0;   //脭脻脢卤脙禄脫脨碌脠麓媒脫娄麓冒2021-11-23
 	}
+	printf("Error, send_mcu_data PortSend failed\n");	
 	return -1;
 }
 
@@ -428,8 +471,8 @@ int uart_init(int argc, char *argv[])
 	int baudrate = 115200;
 
 
-	create_queue(&keyCmdQueue);//创建键盘消息环形队列
-//	create_queue(&mouseCmdQueue);//创建鼠标消息环形队列
+	create_queue(&keyCmdQueue);//麓麓陆篓录眉脜脤脧没脧垄禄路脨脦露脫脕脨
+//	create_queue(&mouseCmdQueue);//麓麓陆篓脢贸卤锚脧没脧垄禄路脨脦露脫脕脨
 	printf("Program %s is running\n", argv[0]);
     if(argc != 1)
 	{
@@ -492,7 +535,7 @@ int uart_init(int argc, char *argv[])
 		return -1; 
 	} 
 	
-	uart_fd = PortOpen(com_port,nonblock);   //参数2为0表示为阻塞模式，非0为非阻塞模式
+	uart_fd = PortOpen(com_port,nonblock);   //虏脦脢媒2脦陋0卤铆脢戮脦陋脳猫脠没脛拢脢陆拢卢路脟0脦陋路脟脳猫脠没脛拢脢陆
 	if( uart_fd < 0 )
 	{
 		ioctl(uinp_fd, UI_DEV_DESTROY);
@@ -504,11 +547,11 @@ int uart_init(int argc, char *argv[])
 
 	return PortSet(uart_fd,baudrate,1,'N');
 
-	//循环处理接收的数据
-    // info_recv_proc_func(uart_fd,p_opt);	//p_opt 为打印选项，1表示接收的数据将打印出来
+	//脩颅禄路麓娄脌铆陆脫脢脮碌脛脢媒戮脻
+    // info_recv_proc_func(uart_fd,p_opt);	//p_opt 脦陋麓貌脫隆脩隆脧卯拢卢1卤铆脢戮陆脫脢脮碌脛脢媒戮脻陆芦麓貌脫隆鲁枚脌麓
 
 
-    //程序退出的处理
+    //鲁脤脨貌脥脣鲁枚碌脛麓娄脌铆
 	/* Close the UINPUT device */
 	// ioctl(uinp_fd, UI_DEV_DESTROY);
 	// close(uinp_fd);       
@@ -558,14 +601,14 @@ int main(int argc, char *argv[])
 	int uart_fd;
 	int c;
 	int baudrate = 115200;
-	int p_opt = 0;   //是否要打印出接收到的字符？
+	int p_opt = 0;   //脢脟路帽脪陋麓貌脫隆鲁枚陆脫脢脮碌陆碌脛脳脰路没拢驴
 	    // const char* p1 = NULL;
 	    // const char* p2 = NULL;
 	    // const char* p3 = NULL;
 
 
-	create_queue(&keyCmdQueue);//创建键盘消息环形队列
-//	create_queue(&mouseCmdQueue);//创建鼠标消息环形队列
+	create_queue(&keyCmdQueue);//麓麓陆篓录眉脜脤脧没脧垄禄路脨脦露脫脕脨
+//	create_queue(&mouseCmdQueue);//麓麓陆篓脢贸卤锚脧没脧垄禄路脨脦露脫脕脨
  
 
 
@@ -631,7 +674,7 @@ int main(int argc, char *argv[])
 		return -1; 
 	} 
 	
-	uart_fd = PortOpen(com_port,nonblock);   //参数2为0表示为阻塞模式，非0为非阻塞模式
+	uart_fd = PortOpen(com_port,nonblock);   //虏脦脢媒2脦陋0卤铆脢戮脦陋脳猫脠没脛拢脢陆拢卢路脟0脦陋路脟脳猫脠没脛拢脢陆
 	if( uart_fd < 0 )
 	{
 		ioctl(uinp_fd, UI_DEV_DESTROY);
@@ -642,11 +685,11 @@ int main(int argc, char *argv[])
 
 	PortSet(uart_fd,baudrate,1,'N');
 
-	//循环处理接收的数据
-    info_recv_proc_func(uart_fd,p_opt);	//p_opt 为打印选项，1表示接收的数据将打印出来
+	//脩颅禄路麓娄脌铆陆脫脢脮碌脛脢媒戮脻
+    info_recv_proc_func(uart_fd,p_opt);	//p_opt 脦陋麓貌脫隆脩隆脧卯拢卢1卤铆脢戮陆脫脢脮碌脛脢媒戮脻陆芦麓貌脫隆鲁枚脌麓
 
 
-    //程序退出的处理
+    //鲁脤脨貌脥脣鲁枚碌脛麓娄脌铆
 	/* Close the UINPUT device */
 	ioctl(uinp_fd, UI_DEV_DESTROY);
 	close(uinp_fd);       

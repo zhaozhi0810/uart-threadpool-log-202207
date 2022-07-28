@@ -9,7 +9,7 @@
 //单片机发给cpu和cpu发给单片机都是4个字节！！！  2022-07-27
 
 
-
+//注意单片机与cpu保持一致  2022-07-28
 //#pragma pack(1) 这个会设置全局的，注释掉
 //数据总共4个字节，这里不含帧头
 typedef struct
@@ -19,6 +19,24 @@ typedef struct
 //	mcu_data_t data;
 	unsigned char crc;     //校验和
 }__attribute__((packed))com_frame_t;    //注意对齐方式
+
+
+
+
+typedef enum
+{	
+	eMCU_LED_STATUS_TYPE=50,  //获得led的状态
+	eMCU_KEY_STATUS_TYPE,    //获得按键的状态
+	eMCU_LED_SETON_TYPE,    //设置对应的led亮
+	eMCU_LED_SETOFF_TYPE,    //设置对应的led灭
+	eMCU_LCD_SETONOFF_TYPE,  //lcd打开关闭
+	eMCU_KEY_CHANGE_TYPE,    //按键被修改上报
+    eMCU_LEDSETALL_TYPE
+}mcu_data_type;
+
+
+
+
 
 
 int uart_init(int argc, char *argv[]) ;
