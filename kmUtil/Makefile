@@ -1,4 +1,4 @@
-#CC=arm-merlin-linux-uclibc-gcc
+CROSS_COMPILE=aarch64-linux-gnu-
 CC=gcc
 #LIBS = -L/opt/mobilygen/distributions/merlin-SDK6r3648/i686-linux/arm-merlin-linux-uclibc/usr/lib 
 LIBS=-L/usr/local/lib -L/usr/lib
@@ -6,9 +6,9 @@ OBJS= queue.o ComFunc.o uart_to_mcu.o #msptr.o  Vkeyb.o
 #CFLAGS= -c -DS3_MOUSE -DUSE_X11_LIB -DDEBUG_VKEY -DDEBUG_MSE
 CFLAGS= -c #-DS3_MOUSE #-DUSE_X11_LIB   
 	
-make:$(OBJS)
+built-in.o:$(OBJS)
 #	$(CROSS_COMPILE)gcc  -rdynamic -s -o kmUtil $(OBJ) $(LIBS)  #-pthread  -lX11
-	$(CROSS_COMPILE)ld -EL -r -o built-in.o $(OBJS) 
+	$(CROSS_COMPILE)ld -EL -r -o $@ $(OBJS) 
 #make:$(OBJ)
 #	$(CC)  -rdynamic -s -o kmUtil $(OBJ) $(LIBS)
 

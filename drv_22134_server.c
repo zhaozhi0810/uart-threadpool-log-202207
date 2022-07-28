@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-07-27 14:14:26
+* @Last Modified time: 2022-07-28 09:29:25
 */
 
 
@@ -34,10 +34,10 @@
 #include "threadpool.h"
 //服务端，包含串口通信，msgq通信，线程池，日志等。
 
-#define TYPE_SEND_API 100   //发    必须跟api是反的！！！！，不要随意改动！！！！
-#define TYPE_RECV 500   //收
+#define TYPE_SENDTO_API 234   //发    必须跟api是反的！！！！，不要随意改动！！！！
+#define TYPE_RECVFROM_API 678   //收
 
-
+const char* g_build_time_str = "Buildtime :"__DATE__" "__TIME__;   //获得编译时间
 //全局变量，数据应该保持实时刷新。
 struct threadpool* pool;  //线程池
 
@@ -47,11 +47,11 @@ struct threadpool* pool;  //线程池
 
 //应答客户的cpi的查询，可以在客户端并发
 //直接回复全局数据
-static void api_answer(msgq_t *pmsgbuf)
+static void answer_to_api(msgq_t *pmsgbuf)
 {
 	msgq_t msgbuf;  //用于应答
 		
-	msgbuf.types = TYPE_SEND_API+pmsgbuf->cmd;  //发送的信息类型
+	msgbuf.types = TYPE_SENDTO_API+pmsgbuf->cmd;  //发送的信息类型
 	msgbuf.cmd = pmsgbuf->cmd;
 	msgbuf.ret = 0;
 
@@ -68,7 +68,7 @@ void* api_answer_thread(void *arg)
 {
 	msgq_t *pmsgbuf = (msgq_t*)arg;
 
-	api_answer(pmsgbuf);    //处理接收到的信息
+	answer_to_api(pmsgbuf);    //处理接收到的信息
 		
 	//内存记得释放
 	free(pmsgbuf);
@@ -86,7 +86,13 @@ static void* msg_connect(void * data)
 	while(1)
 	{
 		pmsgbuf = malloc(sizeof (msgq_t));   //由线程函数释放
-		ret = msgq_recv(TYPE_RECV,pmsgbuf,0);  //阻塞试接收，消息类型都是同一种
+		if(pmsgbuf == NULL)	
+		{
+			printf("error malloc msg_connect!\n");
+			sleep(1);  //等待1s继续
+			continue;
+		}
+		ret = msgq_recv(TYPE_RECVFROM_API,pmsgbuf,0);  //阻塞试接收，消息类型都是同一种
 		if(ret == 0)   //收到信息，打印出来
 		{
 			//调试打印						
@@ -122,7 +128,11 @@ static void* msg_connect(void * data)
 sure that you have inserted the uinput.ko into kernel. */ 
 int main(int argc, char *argv[]) 
 {
-		//串口通信	
+	int t;
+	
+	printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
+
+	//串口通信	
 	if(0 != uart_init(argc, argv))
 	{
 		printf("error:uart_init \n");
@@ -132,7 +142,7 @@ int main(int argc, char *argv[])
 		//用于通信的消息队列
 	if(0 != msgq_init())
 	{
-		printf("error : drvApiOpen\n");
+		printf("error : msgq_init\n");
 		return -1;
 	}
 
@@ -144,7 +154,7 @@ int main(int argc, char *argv[])
 	pool = threadpool_init(4,6);  //初始有多少线程，最多有多少任务排队
 
 	//串口任务，独占一个线程
-	threadpool_add_job(pool,mcu_recvSerial_thread,/*&g_datas*/NULL);  //串口接收,线程启动后不再退出！！！
+	threadpool_add_job(pool,mcu_recvSerial_thread,/*&g_datas*/&t);  //串口接收,线程启动后不再退出！！！
 	
 	//热键处理，独占一个线程
 	//pthread_create(&thread, NULL, hot_key_thread, NULL);
@@ -156,7 +166,7 @@ int main(int argc, char *argv[])
 	
 	while(1)
 	{				
-		usleep(10000);
+		sleep(100);
 	}
 
 }

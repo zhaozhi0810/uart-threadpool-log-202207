@@ -2,13 +2,13 @@
 * @Author: dazhi
 * @Date:   2022-07-27 09:57:14
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-07-27 14:09:30
+* @Last Modified time: 2022-07-28 09:59:58
 */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "drv_22134.h"
+//#include "drv_22134.h"
 #include <utmp.h>
 #include <time.h>
 #include <sys/types.h>
@@ -90,7 +90,7 @@ int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
 	{
 		printf("recv error,msgq_init first!!!\n");
 		fflush(stdout);
-		return -1;
+		return -EPERM;
 	}
 
 	if(timeout_50ms > 0)
@@ -105,13 +105,13 @@ int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
 	    {
 			if(errno == EINTR)
 				continue;
-			return -1;
+			return -EINTR;
 		}
 	    else if(errno != ENOMSG)
 	    {
 	    	printf("msgrcv\n");
 	    	fflush(stdout);
-	    	return -2;
+	    	return -ENOMSG;
 	    }	
 
 	    usleep(50000);   //休眠50ms	   
@@ -121,7 +121,7 @@ int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
     {
     	printf("ERROR:msg recv wait timeout,recv type = %ld!!!\n",types);
 		fflush(stdout);		
-    	return -3;
+    	return -EAGAIN;
     }
     
 //    printf("type = %ld cmd = %d b = %d c = %d rt = %d\n",msgbuf->types,msgbuf->cmd,msgbuf->b,msgbuf->c,msgbuf->ret);
@@ -132,21 +132,21 @@ int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
 
 
 //发送消息，并且要等待应答。
-////参数 timeout 大于0时，设置接收应答超时时间，等于0表示阻塞模式
+////参数 timeout 大于0时，设置接收应答超时时间（50ms的整数倍），等于0表示阻塞模式
 //     ack_types 指定应答的类型，之前是TYPE_RECV+cmd
 //     msgbuf 发送消息的缓存，1次发送一条消息
 //返回0表示成功，其他表示失败
 //注意，函数使用时，需要指定msgbuf->types ！！！！
 int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
 {
-	int ret;
+	int ret = -EBUSY;  //初始值
 	int cmd = msgbuf->cmd;
 
 	if(msgid == -1) //未初始化
 	{
 		printf("send error,msgq_init first!!!\n");
 		fflush(stdout);
-		return -1;
+		return -EPERM;
 	}
 
 	//msgbuf->types = TYPE_SEND; //给消息结构赋值，发送的类型是固定的TYPE_SEND
@@ -155,7 +155,8 @@ int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
     if(msgsnd(msgid, msgbuf, sizeof(msgq_t)-sizeof(long),0) == 0)
     {
     	//等待应答，等待的类型跟命令有关！！！！！
-    	if(0 ==  msgq_recv(ack_types,msgbuf,timeout))    //正常在这返回0，仍然可能不是0. 
+    	ret =  msgq_recv(ack_types,msgbuf,timeout);
+    	if(ret == 0)    //正常在这返回0，仍然可能不是0. 
     	{
     		printf("msgq_send and recv ok!!\n");
 		//	printf("recv type = %ld cmd = %d b = %d c = %d rt = %d\n",msgbuf->types,msgbuf->cmd,msgbuf->b,msgbuf->c,msgbuf->ret);
@@ -166,7 +167,7 @@ int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
 
     printf("msgsnd error!\n"); //这条路应该还是有问题的。打印一下错误提示
     fflush(stdout);
-    return -1; 
+    return ret;   // 返回错误值
 }
 
 

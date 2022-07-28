@@ -10,15 +10,18 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <errno.h>
+// #include <sys/types.h>
+// #include <sys/stat.h>
+// #include <fcntl.h>
 
-#include "drv_22134.h"
+#include "drv_22134_api.h"
 #include "my_ipc_msgq.h"  //用于与串口程序通信！！
 /*
 	与串口通信部分，使用msgq的方式，发送id为678，接收id为234
 
  */
-
-
+#define TYPE_API_SENDTO_SERVER 678   //发
+#define TYPE_API_RECFROM_SERVER 234
 
 
 #define  DEBUG_PRINTF    //用于输出一些出错信息
@@ -61,6 +64,9 @@ void set_print_debug(int val)
 
 
 
+static int CoreBoardInit = 0;   //初始化了吗？初始化成功为1，失败为-1。
+
+
 //核心板初始化函数
 //-1：初始化失败
 //0：初始化成功
@@ -74,9 +80,25 @@ int drvCoreBoardInit(void)
 		DEBUG_PRINTF("ERROR: ret = %d\n",ret);
 		return ret;
 	}
-
+	CoreBoardInit = 1;  //初始化成功
 	return 0;
 }
+
+
+
+//需要单片机通信的，就需要初始化，所以不是所有的api都需要这么做
+static int assert_init(void)
+{	
+	if(CoreBoardInit!=1) //没有初始化
+	{
+		drvCoreBoardInit();  //进行初始化
+		if(CoreBoardInit!=1)  //还是失败？？？
+			return -1;
+	}
+	return 0;
+}
+
+
 
 //使能看门狗函数
 //返回值
@@ -84,7 +106,9 @@ int drvCoreBoardInit(void)
 //1：设置失败
 int drvWatchDogEnable(void)
 {
-	
+
+
+	//nothing todo 2022-07-27
 	return 0;
 }
 
@@ -94,27 +118,27 @@ int drvWatchDogEnable(void)
 //1：设置失败
 int drvWatchDogDisable(void)
 {
-	
+	//nothing todo 2022-07-27
 	return 0;
 }
 
 //喂狗函数
 void drvWatchDogFeeding(void)
 {
-
+	//nothing todo 2022-07-27
 }
 
 //设置看门狗超时时间
 int drvWatchdogSetTimeout(int timeout)
 {
-	
+	//nothing todo 2022-07-27
 	return 0;
 }
 
 //获取看门狗超时时间
 int drvWatchdogGetTimeout(void)
 {
-	
+	//nothing todo 2022-07-27
 	return 0;
 }
 
@@ -145,25 +169,25 @@ void drvEnableWarning(void)
 //使能USB0  //3399的管脚AL4置0   //暂时未引到接口板，无法测量
 void drvEnableUSB0(void)
 {
-
+	//nothing todo 2022-07-27
 }
 
 //使能USB1  //3399的管脚AK4置0   //暂时未引到接口板，无法测量
 void drvEnableUSB1(void)
 {
-
+	//nothing todo 2022-07-27
 }
 
 //去使能USB0  //3399的管脚AL4置1
 void drvDisableUSB0(void)
 {
-
+	//nothing todo 2022-07-27
 }
 
 //去使能USB1  //3399的管脚AK4置1
 void drvDisableUSB1(void)
 {
-
+	//nothing todo 2022-07-27
 }
 
 //打开屏幕
@@ -181,13 +205,13 @@ void drvDisableLcdScreen(void)
 //使能touch module
 void drvEnableTouchModule(void)
 {
-
+	//nothing todo 2022-07-27
 }
 
 //去使能touch module
 void drvDisableTouchModule(void)
 {
-
+	//nothing todo 2022-07-27
 }
 
 //获取屏幕类型
@@ -275,65 +299,165 @@ float drvGetCPUTemp(void)
 //获取核心板温度
 float drvGetBoardTemp(void)
 {
-	
+	//nothing todo 2022-07-27	
 	return 0.0;
 }
 
 //获取当前RTC值
 long drvGetRTC(void)
 {
-	
+	//nothing todo 2022-07-27	
 	return 0;
 }
 
 //设置RTC值
 long drvSetRTC(long secs)
 {
-	
+	//nothing todo 2022-07-27	
 	return 0;
 }
 
 //设置LED灯亮度  参数范围为[0,0x64]
 void drvSetLedBrt(int nBrtVal)
 {
-
+	if(!assert_init()) return;   //初始化失败，直接退出
 }
+
+
+static int __setlcdbrt(int nBrtVal)
+{
+	char data[8];
+
+	if(nBrtVal>= 0 && nBrtVal <= 255)
+	{
+		snprintf(data,sizeof data,"%d",nBrtVal);  //数字转字符串
+		FILE *fp = fopen("/sys/class/backlight/backlight/brightness","r+");
+		if(fp == NULL)
+		{
+			printf("ERROR : open /sys/class/backlight/backlight/brightness\n");
+			return -1;
+		}
+		fputs(data,fp);
+
+		fclose(fp);	
+		return 0;	
+	}
+
+	return -1;  //数值超标
+}
+
 
 //设置屏幕亮度  参数范围为[0,0xff]
 void drvSetLcdBrt(int nBrtVal)
 {
-
+	if(nBrtVal < 0 || nBrtVal > 255)
+	{
+		return;
+	}
+	__setlcdbrt(nBrtVal);
 }
 
-//点亮对应的键灯
+
+//api发送数据给服务器，并且等待服务器应答，超时时间1s
+//第二个参数可以用于返回数据，无数据时可以为NULL
+static int api_send_and_waitack(int cmd,int param1,int *param2)
+{
+	msgq_t msgbuf;  //用于应答
+	int ret;	
+	msgbuf.types = TYPE_API_SENDTO_SERVER;  //发送的信息类型
+	msgbuf.cmd = cmd;      //结构体赋值
+	msgbuf.param1 = param1;
+	if(param2)
+		msgbuf.param2 = *param2;
+	else //空指针
+		msgbuf.param2 = 0;
+	msgbuf.ret = 0;   //一般没有使用
+
+	//3.做出应答
+	ret = msgq_send(TYPE_API_RECFROM_SERVER+cmd,&msgbuf,20); //数据发出后，需要等待 20表示1s
+	if(0!= ret)
+	{		
+		printf("error : msgq_send ,ret = %d\n",ret);
+		return ret;
+	} 
+
+	//判断是否有返回数据
+	if(param2 && msgbuf.ret)  //ret 不为0表示有数据回来
+		*param2 = msgbuf.param1;   //用param1返回数据
+
+	return 0;	
+}
+
+
+//点亮对应的键灯，单片机命令
 void drvLightLED(int nKeyIndex)
 {
+	int param = 1;
+	if(assert_init())  //未初始化
+		return;
+
+	if(api_send_and_waitack(eAPI_LEDSET_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	{
+		printf("error : drvLightLED ,nKeyIndex = %d\n",nKeyIndex);
+	}
 
 }
 
 //熄灭对应的键灯
 void drvDimLED(int nKeyIndex)
 {
+	int param = 0;
+	if(assert_init())  //未初始化
+		return;
+
+	if(api_send_and_waitack(eAPI_LEDSET_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	{
+		printf("error : drvDimLED ,nKeyIndex = %d\n",nKeyIndex);
+	}
 
 }
 
 //点亮所有的键灯
 void drvLightAllLED(void)
 {
+	int param = 1;
+	if(assert_init())  //未初始化
+		return;
 
+	if(api_send_and_waitack(eAPI_LEDSETALL_CMD,0,&param))  //发送的第二个参数无意义，第三个表示点亮还是熄灭
+	{
+		printf("error : drvLightAllLED \n");
+	}
 }
 
 //熄灭所有的键灯
 void drvDimAllLED(void)
 {
+	int param = 0;
+	if(assert_init())  //未初始化
+		return;
+
+	if(api_send_and_waitack(eAPI_LEDSETALL_CMD,0,&param))  //发送的第二个参数无意义，第三个表示点亮还是熄灭
+	{
+		printf("error : drvDimAllLED \n");
+	}
 
 }
 
 //获取对应键灯状态
 int drvGetLEDStatus(int nKeyIndex)
 {
-	
-	return 0;
+	int status = 0;
+	if(assert_init())  //未初始化
+		return -1;
+
+	if(api_send_and_waitack(eAPI_LEDGET_CMD,nKeyIndex,&status))  //发送的第二个参数表示led号，第三个无意义
+	{
+		status = -1;  //没有获得状态
+		printf("error : drvGetLEDStatus ,nKeyIndex = %d\n",nKeyIndex);
+	}
+
+	return status;
 }
 
 //获取耳机插入状态
@@ -388,14 +512,14 @@ void drvSetGpioKeyCbk(GPIO_NOTIFY_KEY_FUNC cbk)
 //获取电压值
 float drvGetVoltage(void)
 {
-	
+	//nothing todo 2022-07-27	
 	return 0.0;
 }
 
 //获取电流值
 float drvGetCurrent(void)
 {
-
+	//nothing todo 2022-07-27
 	return 0.0;
 }
 
@@ -416,7 +540,7 @@ int drvIfBrdReset(void)
 //核心板重置
 int drvCoreBrdReset(void)
 {
-	
+	//nothing todo 2022-07-27	
 	return 0;
 }
 

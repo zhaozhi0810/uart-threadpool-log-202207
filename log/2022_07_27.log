@@ -1,0 +1,453 @@
+[2022_ 7_27  8:51:12]key = 21 press
+[2022_ 7_27  8:51:12]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:51:13]key = 21 release
+[2022_ 7_27  8:51:13]send_a_button VK= 5 VKState = 0
+[2022_ 7_27  8:51:13]key = 21 press
+[2022_ 7_27  8:51:13]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:51:13]key = 21 release
+[2022_ 7_27  8:51:13]send_a_button VK= 5 VKState = 0
+[2022_ 7_27  8:51:13]key = 21 press
+[2022_ 7_27  8:51:13]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:51:13]key = 21 release
+[2022_ 7_27  8:51:13]send_a_button VK= 5 VKState = 0
+[2022_ 7_27  8:51:13]key = 21 press
+[2022_ 7_27  8:51:13]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:51:13]key = 21 release
+[2022_ 7_27  8:51:13]send_a_button VK= 5 VKState = 0
+[2022_ 7_27  8:51:14]key = 24 press
+[2022_ 7_27  8:51:14]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  8:51:14]key = 24 release
+[2022_ 7_27  8:51:14]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  8:51:14]key = 24 press
+[2022_ 7_27  8:51:14]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  8:51:14]key = 24 release
+[2022_ 7_27  8:51:14]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  8:51:14]key = 24 press
+[2022_ 7_27  8:51:14]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  8:51:14]key = 24 release
+[2022_ 7_27  8:51:14]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  8:51:15]key = 22 press
+[2022_ 7_27  8:51:15]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:51:15]key = 22 release
+[2022_ 7_27  8:51:15]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:51:15]key = 22 press
+[2022_ 7_27  8:51:15]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:51:15]key = 22 release
+[2022_ 7_27  8:51:15]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:51:15]key = 22 press
+[2022_ 7_27  8:51:15]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:51:15]key = 22 release
+[2022_ 7_27  8:51:15]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:51:15]key = 22 press
+[2022_ 7_27  8:51:15]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:51:16]key = 22 release
+[2022_ 7_27  8:51:16]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:51:16]key = 19 press
+[2022_ 7_27  8:51:16]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:51:16]key = 19 release
+[2022_ 7_27  8:51:16]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:51:16]key = 19 press
+[2022_ 7_27  8:51:16]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:51:16]key = 19 release
+[2022_ 7_27  8:51:16]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:51:16]key = 19 press
+[2022_ 7_27  8:51:16]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:51:16]key = 19 release
+[2022_ 7_27  8:51:16]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:51:16]key = 25 press
+[2022_ 7_27  8:51:16]send_a_button VK= 9 VKState = 1
+[2022_ 7_27  8:51:16]key = 25 release
+[2022_ 7_27  8:51:16]send_a_button VK= 9 VKState = 0
+[2022_ 7_27  8:51:17]key = 25 press
+[2022_ 7_27  8:51:17]send_a_button VK= 9 VKState = 1
+[2022_ 7_27  8:51:17]key = 25 release
+[2022_ 7_27  8:51:17]send_a_button VK= 9 VKState = 0
+[2022_ 7_27  8:51:17]key = 25 press
+[2022_ 7_27  8:51:17]send_a_button VK= 9 VKState = 1
+[2022_ 7_27  8:51:17]key = 25 release
+[2022_ 7_27  8:51:17]send_a_button VK= 9 VKState = 0
+[2022_ 7_27  8:53: 4]key = 24 press
+[2022_ 7_27  8:53: 4]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  8:53: 4]key = 24 release
+[2022_ 7_27  8:53: 4]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  8:53: 4]key = 24 press
+[2022_ 7_27  8:53: 4]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  8:53: 4]key = 24 release
+[2022_ 7_27  8:53: 4]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  8:53: 4]key = 24 press
+[2022_ 7_27  8:53: 4]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  8:53: 4]key = 24 release
+[2022_ 7_27  8:53: 4]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  8:53: 5]key = 25 press
+[2022_ 7_27  8:53: 5]send_a_button VK= 9 VKState = 1
+[2022_ 7_27  8:53: 5]key = 25 release
+[2022_ 7_27  8:53: 5]send_a_button VK= 9 VKState = 0
+[2022_ 7_27  8:53: 5]key = 25 press
+[2022_ 7_27  8:53: 5]send_a_button VK= 9 VKState = 1
+[2022_ 7_27  8:53: 5]key = 25 release
+[2022_ 7_27  8:53: 5]send_a_button VK= 9 VKState = 0
+[2022_ 7_27  8:53: 5]key = 25 press
+[2022_ 7_27  8:53: 5]send_a_button VK= 9 VKState = 1
+[2022_ 7_27  8:53: 5]key = 25 release
+[2022_ 7_27  8:53: 5]send_a_button VK= 9 VKState = 0
+[2022_ 7_27  8:53: 6]key = 21 press
+[2022_ 7_27  8:53: 6]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:53: 6]key = 21 release
+[2022_ 7_27  8:53: 6]send_a_button VK= 5 VKState = 0
+[2022_ 7_27  8:53: 6]key = 21 press
+[2022_ 7_27  8:53: 6]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:53: 6]key = 21 release
+[2022_ 7_27  8:53: 6]send_a_button VK= 5 VKState = 0
+[2022_ 7_27  8:53: 6]key = 21 press
+[2022_ 7_27  8:53: 6]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:53: 6]key = 21 release
+[2022_ 7_27  8:53: 6]send_a_button VK= 5 VKState = 0
+[2022_ 7_27  8:53: 7]key = 21 press
+[2022_ 7_27  8:53: 7]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:53: 7]key = 21 release
+[2022_ 7_27  8:53: 7]send_a_button VK= 5 VKState = 0
+[2022_ 7_27  8:53: 7]key = 18 press
+[2022_ 7_27  8:53: 7]send_a_button VK= 2 VKState = 1
+[2022_ 7_27  8:53: 7]key = 18 release
+[2022_ 7_27  8:53: 7]send_a_button VK= 2 VKState = 0
+[2022_ 7_27  8:53: 7]key = 18 press
+[2022_ 7_27  8:53: 7]send_a_button VK= 2 VKState = 1
+[2022_ 7_27  8:53: 7]key = 18 release
+[2022_ 7_27  8:53: 7]send_a_button VK= 2 VKState = 0
+[2022_ 7_27  8:53: 7]key = 18 press
+[2022_ 7_27  8:53: 7]send_a_button VK= 2 VKState = 1
+[2022_ 7_27  8:53: 7]key = 18 release
+[2022_ 7_27  8:53: 7]send_a_button VK= 2 VKState = 0
+[2022_ 7_27  8:53: 8]key = 19 press
+[2022_ 7_27  8:53: 8]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:53: 8]key = 19 release
+[2022_ 7_27  8:53: 8]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:53: 8]key = 19 press
+[2022_ 7_27  8:53: 8]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:53: 8]key = 19 release
+[2022_ 7_27  8:53: 8]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:53: 8]key = 19 press
+[2022_ 7_27  8:53: 8]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:53: 8]key = 19 release
+[2022_ 7_27  8:53: 8]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:53: 8]key = 19 press
+[2022_ 7_27  8:53: 8]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:53: 8]key = 19 release
+[2022_ 7_27  8:53: 8]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:53: 9]key = 22 press
+[2022_ 7_27  8:53: 9]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:53: 9]key = 22 release
+[2022_ 7_27  8:53: 9]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:53: 9]key = 22 press
+[2022_ 7_27  8:53: 9]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:53: 9]key = 22 release
+[2022_ 7_27  8:53: 9]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:53: 9]key = 22 press
+[2022_ 7_27  8:53: 9]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:53: 9]key = 22 release
+[2022_ 7_27  8:53: 9]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:53: 9]key = 25 press
+[2022_ 7_27  8:53: 9]send_a_button VK= 9 VKState = 1
+[2022_ 7_27  8:53: 9]key = 25 release
+[2022_ 7_27  8:53: 9]send_a_button VK= 9 VKState = 0
+[2022_ 7_27  8:53: 9]key = 25 press
+[2022_ 7_27  8:53: 9]send_a_button VK= 9 VKState = 1
+[2022_ 7_27  8:53: 9]key = 25 release
+[2022_ 7_27  8:53: 9]send_a_button VK= 9 VKState = 0
+[2022_ 7_27  8:53: 9]key = 25 press
+[2022_ 7_27  8:53: 9]send_a_button VK= 9 VKState = 1
+[2022_ 7_27  8:53:10]key = 25 release
+[2022_ 7_27  8:53:10]send_a_button VK= 9 VKState = 0
+[2022_ 7_27  8:53:10]key = 22 press
+[2022_ 7_27  8:53:10]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:53:10]key = 22 release
+[2022_ 7_27  8:53:10]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:53:10]key = 22 press
+[2022_ 7_27  8:53:10]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:53:10]key = 22 release
+[2022_ 7_27  8:53:10]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:53:10]key = 22 press
+[2022_ 7_27  8:53:10]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:53:10]key = 22 release
+[2022_ 7_27  8:53:10]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:53:10]key = 22 press
+[2022_ 7_27  8:53:10]send_a_button VK= 6 VKState = 1
+[2022_ 7_27  8:53:10]key = 22 release
+[2022_ 7_27  8:53:10]send_a_button VK= 6 VKState = 0
+[2022_ 7_27  8:53:11]key = 19 press
+[2022_ 7_27  8:53:11]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:53:11]key = 19 release
+[2022_ 7_27  8:53:11]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:53:11]key = 19 press
+[2022_ 7_27  8:53:11]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:53:11]key = 19 release
+[2022_ 7_27  8:53:11]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:53:11]key = 19 press
+[2022_ 7_27  8:53:11]send_a_button VK= 3 VKState = 1
+[2022_ 7_27  8:53:11]key = 19 release
+[2022_ 7_27  8:53:11]send_a_button VK= 3 VKState = 0
+[2022_ 7_27  8:53:11]key = 18 press
+[2022_ 7_27  8:53:11]send_a_button VK= 2 VKState = 1
+[2022_ 7_27  8:53:11]key = 18 release
+[2022_ 7_27  8:53:11]send_a_button VK= 2 VKState = 0
+[2022_ 7_27  8:53:11]key = 18 press
+[2022_ 7_27  8:53:11]send_a_button VK= 2 VKState = 1
+[2022_ 7_27  8:53:11]key = 18 release
+[2022_ 7_27  8:53:11]send_a_button VK= 2 VKState = 0
+[2022_ 7_27  8:53:12]key = 18 press
+[2022_ 7_27  8:53:12]send_a_button VK= 2 VKState = 1
+[2022_ 7_27  8:53:12]key = 18 release
+[2022_ 7_27  8:53:12]send_a_button VK= 2 VKState = 0
+[2022_ 7_27  8:53:12]key = 21 press
+[2022_ 7_27  8:53:12]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:53:12]key = 21 release
+[2022_ 7_27  8:53:12]send_a_button VK= 5 VKState = 0
+[2022_ 7_27  8:53:12]key = 24 press
+[2022_ 7_27  8:53:12]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  8:53:13]key = 24 release
+[2022_ 7_27  8:53:13]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  8:53:14]key = 18 press
+[2022_ 7_27  8:53:14]send_a_button VK= 2 VKState = 1
+[2022_ 7_27  8:53:14]key = 18 release
+[2022_ 7_27  8:53:14]send_a_button VK= 2 VKState = 0
+[2022_ 7_27  8:53:14]key = 21 press
+[2022_ 7_27  8:53:14]send_a_button VK= 5 VKState = 1
+[2022_ 7_27  8:53:15]key = 21 release
+[2022_ 7_27  9: 5:22]key = 28 press
+[2022_ 7_27  9: 5:22]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:22]key = 28 release
+[2022_ 7_27  9: 5:22]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:23]key = 28 press
+[2022_ 7_27  9: 5:23]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:23]key = 28 release
+[2022_ 7_27  9: 5:23]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:23]key = 28 press
+[2022_ 7_27  9: 5:23]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:23]key = 28 release
+[2022_ 7_27  9: 5:23]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:23]key = 28 press
+[2022_ 7_27  9: 5:23]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:23]key = 28 release
+[2022_ 7_27  9: 5:23]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:23]key = 24 press
+[2022_ 7_27  9: 5:23]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:23]key = 24 release
+[2022_ 7_27  9: 5:23]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:23]key = 24 press
+[2022_ 7_27  9: 5:23]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:24]key = 24 release
+[2022_ 7_27  9: 5:24]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:24]key = 24 press
+[2022_ 7_27  9: 5:24]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:24]key = 24 release
+[2022_ 7_27  9: 5:24]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:24]key = 24 press
+[2022_ 7_27  9: 5:24]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:24]key = 24 release
+[2022_ 7_27  9: 5:24]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:25]key = 28 press
+[2022_ 7_27  9: 5:25]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:25]key = 28 release
+[2022_ 7_27  9: 5:25]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:25]key = 28 press
+[2022_ 7_27  9: 5:25]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:25]key = 28 release
+[2022_ 7_27  9: 5:25]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:25]key = 28 press
+[2022_ 7_27  9: 5:25]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:25]key = 28 release
+[2022_ 7_27  9: 5:25]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:26]key = 24 press
+[2022_ 7_27  9: 5:26]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:26]key = 24 release
+[2022_ 7_27  9: 5:26]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:26]key = 24 press
+[2022_ 7_27  9: 5:26]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:26]key = 24 release
+[2022_ 7_27  9: 5:26]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:26]key = 24 press
+[2022_ 7_27  9: 5:26]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:26]key = 24 release
+[2022_ 7_27  9: 5:26]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:27]key = 28 press
+[2022_ 7_27  9: 5:27]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:27]key = 28 release
+[2022_ 7_27  9: 5:27]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:27]key = 28 press
+[2022_ 7_27  9: 5:27]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:27]key = 28 release
+[2022_ 7_27  9: 5:27]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:28]key = 24 press
+[2022_ 7_27  9: 5:28]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:28]key = 24 release
+[2022_ 7_27  9: 5:28]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:28]key = 24 press
+[2022_ 7_27  9: 5:28]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:28]key = 24 release
+[2022_ 7_27  9: 5:28]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:28]key = 28 press
+[2022_ 7_27  9: 5:28]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:28]key = 28 release
+[2022_ 7_27  9: 5:28]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:29]key = 28 press
+[2022_ 7_27  9: 5:29]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:29]key = 28 release
+[2022_ 7_27  9: 5:29]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:29]key = 24 press
+[2022_ 7_27  9: 5:29]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:29]key = 24 release
+[2022_ 7_27  9: 5:29]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:29]key = 24 press
+[2022_ 7_27  9: 5:29]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:29]key = 24 release
+[2022_ 7_27  9: 5:29]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:30]key = 28 press
+[2022_ 7_27  9: 5:30]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:30]key = 28 release
+[2022_ 7_27  9: 5:30]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:30]key = 28 press
+[2022_ 7_27  9: 5:30]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:30]key = 28 release
+[2022_ 7_27  9: 5:30]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:30]key = 24 press
+[2022_ 7_27  9: 5:30]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:30]key = 24 release
+[2022_ 7_27  9: 5:30]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:31]key = 24 press
+[2022_ 7_27  9: 5:31]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:31]key = 24 release
+[2022_ 7_27  9: 5:31]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:31]key = 24 press
+[2022_ 7_27  9: 5:31]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:31]key = 24 release
+[2022_ 7_27  9: 5:31]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:31]key = 24 press
+[2022_ 7_27  9: 5:31]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:31]key = 24 release
+[2022_ 7_27  9: 5:31]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:35]key = 28 press
+[2022_ 7_27  9: 5:35]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:35]key = 28 release
+[2022_ 7_27  9: 5:35]send_a_button VK= 55 VKState = 0
+[2022_ 7_27  9: 5:35]key = 24 press
+[2022_ 7_27  9: 5:35]send_a_button VK= 8 VKState = 1
+[2022_ 7_27  9: 5:36]key = 24 release
+[2022_ 7_27  9: 5:36]send_a_button VK= 8 VKState = 0
+[2022_ 7_27  9: 5:36]key = 28 press
+[2022_ 7_27  9: 5:36]send_a_button VK= 55 VKState = 1
+[2022_ 7_27  9: 5:36]key = 28 release
+[2022_ 7_27 11:25: 6]key = 22 press
+[2022_ 7_27 11:25: 6]send_a_button VK= 6 VKState = 1
+[2022_ 7_27 11:25: 6]key = 22 release
+[2022_ 7_27 11:25: 6]send_a_button VK= 6 VKState = 0
+[2022_ 7_27 11:25: 6]key = 22 press
+[2022_ 7_27 11:25: 6]send_a_button VK= 6 VKState = 1
+[2022_ 7_27 11:25: 6]key = 22 release
+[2022_ 7_27 11:25: 6]send_a_button VK= 6 VKState = 0
+[2022_ 7_27 11:25: 6]key = 22 press
+[2022_ 7_27 11:25: 6]send_a_button VK= 6 VKState = 1
+[2022_ 7_27 11:25: 7]key = 22 release
+[2022_ 7_27 11:25: 7]send_a_button VK= 6 VKState = 0
+[2022_ 7_27 11:25: 7]key = 19 press
+[2022_ 7_27 11:25: 7]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:25: 7]key = 19 release
+[2022_ 7_27 11:25: 7]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:25: 7]key = 19 press
+[2022_ 7_27 11:25: 7]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:25: 7]key = 19 release
+[2022_ 7_27 11:25: 7]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:25: 7]key = 22 press
+[2022_ 7_27 11:25: 7]send_a_button VK= 6 VKState = 1
+[2022_ 7_27 11:25: 8]key = 22 release
+[2022_ 7_27 11:25: 8]send_a_button VK= 6 VKState = 0
+[2022_ 7_27 11:25: 8]key = 19 press
+[2022_ 7_27 11:25: 8]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:25: 9]key = 19 release
+[2022_ 7_27 11:25: 9]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:25: 9]key = 19 press
+[2022_ 7_27 11:25: 9]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:25: 9]key = 19 release
+[2022_ 7_27 11:25: 9]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:25: 9]key = 27 press
+[2022_ 7_27 11:25: 9]send_a_button VK= 11 VKState = 1
+[2022_ 7_27 11:25:11]key = 27 release
+[2022_ 7_27 11:25:11]send_a_button VK= 11 VKState = 0
+[2022_ 7_27 11:25:11]key = 19 press
+[2022_ 7_27 11:25:11]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:25:12]key = 19 release
+[2022_ 7_27 11:25:12]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:48:50]key = 19 press
+[2022_ 7_27 11:48:50]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:48:50]key = 19 release
+[2022_ 7_27 11:48:50]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:48:51]key = 19 press
+[2022_ 7_27 11:48:51]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:48:51]key = 19 release
+[2022_ 7_27 11:48:51]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:48:51]key = 19 press
+[2022_ 7_27 11:48:51]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:48:51]key = 19 release
+[2022_ 7_27 11:48:51]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:48:51]key = 22 press
+[2022_ 7_27 11:48:51]send_a_button VK= 6 VKState = 1
+[2022_ 7_27 11:48:52]key = 22 release
+[2022_ 7_27 11:48:52]send_a_button VK= 6 VKState = 0
+[2022_ 7_27 11:48:52]key = 25 press
+[2022_ 7_27 11:48:52]send_a_button VK= 9 VKState = 1
+[2022_ 7_27 11:48:52]key = 25 release
+[2022_ 7_27 11:48:52]send_a_button VK= 9 VKState = 0
+[2022_ 7_27 11:48:52]key = 25 press
+[2022_ 7_27 11:48:52]send_a_button VK= 9 VKState = 1
+[2022_ 7_27 11:48:52]key = 25 release
+[2022_ 7_27 11:48:52]send_a_button VK= 9 VKState = 0
+[2022_ 7_27 11:48:53]key = 27 press
+[2022_ 7_27 11:48:53]send_a_button VK= 11 VKState = 1
+[2022_ 7_27 11:48:53]key = 27 release
+[2022_ 7_27 11:48:53]send_a_button VK= 11 VKState = 0
+[2022_ 7_27 11:48:53]key = 27 press
+[2022_ 7_27 11:48:53]send_a_button VK= 11 VKState = 1
+[2022_ 7_27 11:48:54]key = 27 release
+[2022_ 7_27 11:48:54]send_a_button VK= 11 VKState = 0
+[2022_ 7_27 11:48:54]key = 25 press
+[2022_ 7_27 11:48:54]send_a_button VK= 9 VKState = 1
+[2022_ 7_27 11:48:54]key = 25 release
+[2022_ 7_27 11:48:54]send_a_button VK= 9 VKState = 0
+[2022_ 7_27 11:48:54]key = 22 press
+[2022_ 7_27 11:48:54]send_a_button VK= 6 VKState = 1
+[2022_ 7_27 11:48:54]key = 22 release
+[2022_ 7_27 11:48:54]send_a_button VK= 6 VKState = 0
+[2022_ 7_27 11:48:55]key = 19 press
+[2022_ 7_27 11:48:55]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:48:55]key = 19 release
+[2022_ 7_27 11:48:55]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:48:55]key = 19 press
+[2022_ 7_27 11:48:55]send_a_button VK= 3 VKState = 1
+[2022_ 7_27 11:48:55]key = 19 release
+[2022_ 7_27 11:48:55]send_a_button VK= 3 VKState = 0
+[2022_ 7_27 11:48:56]key = 18 press
+[2022_ 7_27 11:48:56]send_a_button VK= 2 VKState = 1
+[2022_ 7_27 11:48:56]key = 18 release
+[2022_ 7_27 11:48:56]send_a_button VK= 2 VKState = 0
+[2022_ 7_27 11:48:56]key = 18 press
+[2022_ 7_27 11:48:56]send_a_button VK= 2 VKState = 1
+[2022_ 7_27 11:48:56]key = 18 release
+[2022_ 7_27 11:48:56]send_a_button VK= 2 VKState = 0
+[2022_ 7_27 11:48:56]key = 21 press
+[2022_ 7_27 11:48:56]send_a_button VK= 5 VKState = 1
+[2022_ 7_27 11:48:57]key = 21 release
+[2022_ 7_27 11:48:57]send_a_button VK= 5 VKState = 0
+[2022_ 7_27 11:48:57]key = 24 press
+[2022_ 7_27 11:48:57]send_a_button VK= 8 VKState = 1
+[2022_ 7_27 11:48:57]key = 24 release
+[2022_ 7_27 11:48:57]send_a_button VK= 8 VKState = 0
+[2022_ 7_27 11:48:57]key = 28 press
+[2022_ 7_27 11:48:57]send_a_button VK= 55 VKState = 1
+[2022_ 7_27 11:48:57]key = 28 release
+[2022_ 7_27 11:48:57]send_a_button VK= 55 VKState = 0
+[2022_ 7_27 11:48:58]key = 28 press
+[2022_ 7_27 11:48:58]send_a_button VK= 55 VKState = 1
+[2022_ 7_27 11:48:58]key = 28 release
+[2022_ 7_27 11:48:58]send_a_button VK= 55 VKState = 0
+[2022_ 7_27 11:48:58]key = 28 press
+[2022_ 7_27 11:48:58]send_a_button VK= 55 VKState = 1
+[2022_ 7_27 11:48:58]key = 28 release

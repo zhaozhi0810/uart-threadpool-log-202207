@@ -25,6 +25,19 @@ typedef struct  //消息结构体
 
 
 
+enum API_CMD_types{
+	eAPI_LEDSET_CMD = 0,   //设置led
+	eAPI_LEDGET_CMD,         //获取led状态
+	eAPI_LEDSETALL_CMD,      //设置所有的led
+	eAPI_LEDGETALL_CMD,      //获取所有的led
+	eAPI_BTNGET_CMD,         //获取按键
+	eAPI_BTNEVENT_CMD,       //等待按键事件
+};
+
+
+
+
+
 //返回值0表示成功，其他表示失败
 int msgq_init(void);
 

@@ -258,7 +258,7 @@ static void ProcRecvKeyCmd(void)
 	while(1)  //考虑到可能接收到多帧要处理的情况
 	{		
 		length = queue_length(&keyCmdQueue);	
-		if(length < datalen)   //（包括帧头）小于7个字节，不是完整的一帧
+		if(length < datalen)   //（包括帧头）小于4个字节，不是完整的一帧
 		{	
 			//com3_answer_3A3000(RECV_NO);   //应答接收到的长度不对
 			return ;   //继续等待
