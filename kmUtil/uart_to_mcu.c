@@ -214,9 +214,11 @@ static void com_message_handle(void)
 			default:
 				uart_recv_flag = 0;
 				printf("ERROR:unknown uart recv\n");
+				printf("com_recv_data[1] = %d com_recv_data[2] = %d\n",com_recv_data[1],com_recv_data[2]);
 			break;
 		}
-		printf("com_recv_data[1] = %d com_recv_data[2] = %d\n",com_recv_data[1],com_recv_data[2]);
+		//调试信息
+	//	printf("com_recv_data[1] = %d com_recv_data[2] = %d\n",com_recv_data[1],com_recv_data[2]);
 	}
 }
 

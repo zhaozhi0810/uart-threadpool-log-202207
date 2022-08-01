@@ -16,6 +16,12 @@
 
 #include "drv_22134_api.h"
 #include "my_ipc_msgq.h"  //用于与串口程序通信！！
+#include "gpio_export.h"
+#include "mixer_scontrols.h"   //音频控制
+#include "audio-i2c/codec.h"
+#include "audio-i2c/debug.h"
+
+
 /*
 	与串口通信部分，使用msgq的方式，发送id为678，接收id为234
 
@@ -27,6 +33,11 @@
 #define  DEBUG_PRINTF    //用于输出一些出错信息
 #define  MY_DEBUG        //用于输出一些调试信息，正常使用时不需要
 static int print_debug = 0;
+
+
+#define I2C_ADAPTER_DEVICE	"/dev/i2c-4"
+#define I2C_DEVICE_ADDR		(0x11)
+
 
 
 #ifdef DEBUG_PRINTF
@@ -65,7 +76,7 @@ void set_print_debug(int val)
 
 
 static int CoreBoardInit = 0;   //初始化了吗？初始化成功为1，失败为-1。
-
+static int KeyboardTypepins[3]={-1,-1,-1};  //用于键盘识别的
 
 
 //api发送数据给服务器，并且等待服务器应答，超时时间1s
@@ -121,19 +132,73 @@ static int __setlcdbrt(int nBrtVal)
 }
 
 
-//核心板初始化函数
+static int getKeyboardTypePinInit(void)
+{
+	static int inited = 0;
+
+	if(inited)
+		return 0;
+	//获取引脚号
+	KeyboardTypepins[0] = get_pin(RK_GPIO2,RK_PB1);
+	KeyboardTypepins[1] = get_pin(RK_GPIO2,RK_PD2);
+	KeyboardTypepins[2] = get_pin(RK_GPIO4,RK_PC7);
+
+	printf("debug: pins = %d %d %d\n",KeyboardTypepins[0],KeyboardTypepins[1],KeyboardTypepins[2]);
+
+
+	if(gpio_direction_set(KeyboardTypepins[0], GPIO_DIR_IN) == false)
+	{
+		printf("ERROR: getKeyboardTypePinInit gpio_direction_set pins[0]\n");
+		return -1;
+	}
+	if(gpio_direction_set(KeyboardTypepins[1], GPIO_DIR_IN) == false)
+	{
+		printf("ERROR: getKeyboardTypePinInit gpio_direction_set pins[1]\n");
+		return -1;
+	}
+	if(gpio_direction_set(KeyboardTypepins[2], GPIO_DIR_IN) == false)
+	{
+		printf("ERROR: getKeyboardTypePinInit gpio_direction_set pins[2]\n");
+		return -1;
+	}
+
+	inited = 1;   //初始化了！！！
+	return 0;
+}
+
+
+
+//1. 核心板初始化函数
 //-1：初始化失败
 //0：初始化成功
 int drvCoreBoardInit(void)
 {
 	int ret ;
 	ret = msgq_init();
-
 	if(ret)  //不为0，表示出错！！
 	{
-		DEBUG_PRINTF("ERROR: ret = %d\n",ret);
+		DEBUG_PRINTF("ERROR: msgq_init ret = %d\n",ret);
+		CoreBoardInit = -1;   //记录初始化失败
 		return ret;
 	}
+	
+
+	ret = getKeyboardTypePinInit();  //用于键盘识别的引脚初始化
+	if(ret) //不为0，表示出错！！
+	{
+		DEBUG_PRINTF("ERROR: getKeyboardTypePinInit ret = %d\n",ret);
+		CoreBoardInit = -1;   //记录初始化失败
+		return ret;
+	}
+
+	ret = i2c_adapter_init(I2C_ADAPTER_DEVICE, I2C_DEVICE_ADDR);
+	if(ret) //不为0，表示出错！！
+	{
+		DEBUG_PRINTF("ERROR: i2c_adapter_init ret = %d\n",ret);
+		CoreBoardInit = -1;   //记录初始化失败
+		return ret;
+	}
+
 	CoreBoardInit = 1;  //初始化成功
 	return 0;
 }
@@ -154,7 +219,7 @@ static int assert_init(void)
 
 
 
-//使能看门狗函数
+//2. 使能看门狗函数
 //返回值
 //0：设置成功
 //1：设置失败
@@ -166,7 +231,7 @@ int drvWatchDogEnable(void)
 	return 0;
 }
 
-//去使能看门狗函数
+//3. 去使能看门狗函数
 //返回值
 //0：设置成功
 //1：设置失败
@@ -176,75 +241,78 @@ int drvWatchDogDisable(void)
 	return 0;
 }
 
-//喂狗函数
+//4. 喂狗函数
 void drvWatchDogFeeding(void)
 {
 	//nothing todo 2022-07-27
 }
 
-//设置看门狗超时时间
+//5. 设置看门狗超时时间
 int drvWatchdogSetTimeout(int timeout)
 {
 	//nothing todo 2022-07-27
 	return 0;
 }
 
-//获取看门狗超时时间
+//6. 获取看门狗超时时间
 int drvWatchdogGetTimeout(void)
 {
 	//nothing todo 2022-07-27
 	return 0;
 }
 
-//禁止扬声器放音  //3399的AD7管脚置0  //接口板上J45的5脚
+//7. 禁止扬声器放音  //3399的AD7管脚置0  //接口板上J45的5脚
 void drvDisableSpeaker(void)
 {
+	//通道2左声道 是否是音量调为0？
+
 
 }
 
-//允许扬声器放音  //3399的AD7管脚置1
+//8. 允许扬声器放音  //3399的AD7管脚置1
 void drvEnableSpeaker(void)
 {
-
+	//通道2左声道 是否是音量调为80？
 }
 
-//关闭强声器  //3399的AG4管脚置1  //接口板芯片U5的2脚
+//9. 关闭强声器  //3399的AG4管脚置1  //接口板芯片U5的2脚
 void drvDisableWarning(void)
 {
-
+	//通道2右声道 是否是音量调为0？
 }
 
-//打开强声器  //3399的AG4管脚置0
+//10. 打开强声器  //3399的AG4管脚置0
 void drvEnableWarning(void)
 {
-
+	//通道2右声道 是否是音量调为80？
+	
 }
 
-//使能USB0  //3399的管脚AL4置0   //暂时未引到接口板，无法测量
+//11. 使能USB0  //3399的管脚AL4置0   //暂时未引到接口板，无法测量
 void drvEnableUSB0(void)
 {
 	//nothing todo 2022-07-27
 }
 
-//使能USB1  //3399的管脚AK4置0   //暂时未引到接口板，无法测量
+//12. 使能USB1  //3399的管脚AK4置0   //暂时未引到接口板，无法测量
 void drvEnableUSB1(void)
 {
 	//nothing todo 2022-07-27
 }
 
-//去使能USB0  //3399的管脚AL4置1
+//13. 去使能USB0  //3399的管脚AL4置1
 void drvDisableUSB0(void)
 {
 	//nothing todo 2022-07-27
 }
 
-//去使能USB1  //3399的管脚AK4置1
+//14 . 去使能USB1  //3399的管脚AK4置1
 void drvDisableUSB1(void)
 {
 	//nothing todo 2022-07-27
 }
 
-//打开屏幕,由于单片机没法控制lcd的开启关闭，现在只能打开pwm
+//15. 打开屏幕,由于单片机没法控制lcd的开启关闭，现在只能打开pwm
 void drvEnableLcdScreen(void)
 {
 #if 1
@@ -261,7 +329,7 @@ void drvEnableLcdScreen(void)
 #endif
 }
 
-//关闭屏幕，由于单片机没法控制lcd的开启关闭，现在只能打开pwm
+//16.关闭屏幕，由于单片机没法控制lcd的开启关闭，现在只能打开pwm
 void drvDisableLcdScreen(void)
 {
 #if 1
@@ -279,19 +347,19 @@ void drvDisableLcdScreen(void)
 #endif
 }
 
-//使能touch module
+//17.使能touch module
 void drvEnableTouchModule(void)
 {
 	//nothing todo 2022-07-27
 }
 
-//去使能touch module
+//18. 去使能touch module
 void drvDisableTouchModule(void)
 {
 	//nothing todo 2022-07-27
 }
 
-//获取屏幕类型
+//19.获取屏幕类型
 /*
 返回值
 1：7寸屏
@@ -307,10 +375,13 @@ int drvGetLCDType(void)
 //	return 0;
 }
 
-//获取键盘类型
+
+
+
+
+//20.获取键盘类型
 /*
 返回值
-
 1：防爆终端键盘类型
 2：壁挂Ⅲ型终端键盘类型（不关心！！）
 4：嵌入式Ⅰ/Ⅱ/Ⅲ型、防风雨型、壁挂Ⅱ型终端键盘类型
@@ -318,8 +389,24 @@ int drvGetLCDType(void)
  */
 int getKeyboardType(void)
 {
-	
-	return 0;
+	//使用3399的gpio读取
+	int result = 0;
+	GPIO_LEVEL level[3];
+	if(CoreBoardInit != 1) //没有初始化
+		return -1;
+
+	if(KeyboardTypepins[0]<0 || gpio_level_read(KeyboardTypepins[0], level)==false)
+		return -1;
+	if(KeyboardTypepins[1]<0 || gpio_level_read(KeyboardTypepins[1], level+1)==false)
+		return -1;
+	if(KeyboardTypepins[2]<0 || gpio_level_read(KeyboardTypepins[2], level+2)==false)
+		return -1;
+
+	result |= (level[0] == GPIO_LEVEL_HIGH)?1:0;
+	result |= (level[1] == GPIO_LEVEL_HIGH)?2:0;
+	result |= (level[1] == GPIO_LEVEL_HIGH)?4:0;
+
+	return result;
 }
 
 
@@ -357,7 +444,7 @@ static  int parse_cputemp(int *temp)
 	return 0;
 }
 
-//获取CPU温度
+//21. 获取CPU温度
 float drvGetCPUTemp(void)
 {
 	int tmp;
@@ -373,28 +460,28 @@ float drvGetCPUTemp(void)
 	return 0.0;
 }
 
-//获取核心板温度
+//22. 获取核心板温度
 float drvGetBoardTemp(void)
 {
 	//nothing todo 2022-07-27	
 	return 0.0;
 }
 
-//获取当前RTC值
+//23. 获取当前RTC值
 long drvGetRTC(void)
 {
 	//nothing todo 2022-07-27	
 	return 0;
 }
 
-//设置RTC值
+//24. 设置RTC值
 long drvSetRTC(long secs)
 {
 	//nothing todo 2022-07-27	
 	return 0;
 }
 
-//设置LED灯亮度  参数范围为[0,0x64]
+//25. 设置LED灯亮度  参数范围为[0,0x64]
 void drvSetLedBrt(int nBrtVal)
 {
 	if(!assert_init()) return;   //初始化失败，直接退出
@@ -404,7 +491,7 @@ void drvSetLedBrt(int nBrtVal)
 
 
 
-//设置屏幕亮度  参数范围为[0,0xff]
+//26. 设置屏幕亮度  参数范围为[0,0xff]
 void drvSetLcdBrt(int nBrtVal)
 {
 	if(nBrtVal < 0 || nBrtVal > 255)
@@ -418,7 +505,7 @@ void drvSetLcdBrt(int nBrtVal)
 
 
 
-//点亮对应的键灯，单片机命令
+//27. 点亮对应的键灯，单片机命令
 void drvLightLED(int nKeyIndex)
 {
 	int param = 1;
@@ -432,7 +519,7 @@ void drvLightLED(int nKeyIndex)
 
 }
 
-//熄灭对应的键灯
+//28. 熄灭对应的键灯
 void drvDimLED(int nKeyIndex)
 {
 	int param = 0;
@@ -446,7 +533,7 @@ void drvDimLED(int nKeyIndex)
 
 }
 
-//点亮所有的键灯
+//29. 点亮所有的键灯
 void drvLightAllLED(void)
 {
 	int param = 1;
@@ -459,7 +546,7 @@ void drvLightAllLED(void)
 	}
 }
 
-//熄灭所有的键灯
+//30. 熄灭所有的键灯
 void drvDimAllLED(void)
 {
 	int param = 0;
@@ -473,7 +560,7 @@ void drvDimAllLED(void)
 
 }
 
-//获取对应键灯状态
+//31. 获取对应键灯状态
 int drvGetLEDStatus(int nKeyIndex)
 {
 	int status = 0;
@@ -489,25 +576,25 @@ int drvGetLEDStatus(int nKeyIndex)
 	return status;
 }
 
-//获取耳机插入状态
+//32. 获取耳机插入状态
 ////返回值
 //-1：失败
 //0：未插入
 //1：插入
 int drvGetMicStatus(void)
 {
-	
+//	return get_headset_insert_status()? 1:0;
 	return 0;
 }
 
-//获取手柄插入状态
+//33. 获取手柄插入状态
 //返回值
 //-1：失败
 //0：未插入
 //1：插入
 int drvGetHMicStatus(void)
 {
-	
+//	return get_handle_insert_status()? 1:0;
 	return 0;
 }
 
@@ -521,7 +608,7 @@ typedef void (GPIO_NOTIFY_FUNC)(int gpio, int val);
 //脚踩ptt：17
 //耳机插入：48
 //手柄插入：49
-//PTT及耳机插入等事件上报回调
+//34. PTT及耳机插入等事件上报回调
 void drvSetGpioCbk(GPIO_NOTIFY_FUNC cbk)
 {
 
@@ -532,172 +619,286 @@ typedef void (GPIO_NOTIFY_KEY_FUNC)(int gpio, int val);
 
 //int gpio：键值
 //int val：状态，1为按下，0为松开
-//面板按键事件上报回调
+//35. 面板按键事件上报回调
 void drvSetGpioKeyCbk(GPIO_NOTIFY_KEY_FUNC cbk)
 {
 
 }
 
-//获取电压值
+//36. 获取电压值
 float drvGetVoltage(void)
 {
 	//nothing todo 2022-07-27	
 	return 0.0;
 }
 
-//获取电流值
+//37. 获取电流值
 float drvGetCurrent(void)
 {
 	//nothing todo 2022-07-27
 	return 0.0;
 }
 
-//Lcd屏重置
+//38. Lcd屏重置
 int drvLcdReset(void)
 {
 
 	return 0;
 }
 
-//键盘重置
+//39.键盘重置
 int drvIfBrdReset(void)
 {
 	
 	return 0;
 }
 
-//核心板重置
+//40.核心板重置
 int drvCoreBrdReset(void)
 {
 	//nothing todo 2022-07-27	
 	return 0;
 }
 
-//打开音量调节
+//41.打开音量调节
 void drvEnableTune(void)
 {
 	
-
 }
 
-//关闭音量调节
+//42.关闭音量调节
 void drvDisableTune(void)
 {
 
 }
 
-//分级调节音量大小
+//43.分级调节音量大小
 void drvAdjustTune(void)
 {
 
 }
 
-//正向调节音量
+//44.正向调节音量，pcm调节
 void drvSetTuneUp(void)
 {
+//	amixer_vol_control(PCM,10,'+');
+//	CHECK(value > 0 && value <= 100, , "Error value out of range!");
+	unsigned char val = 0;
+	// unsigned char val_max = 0x21;
+	// unsigned char val_step = val_max*value/100;
 
+	CHECK(!s_read_reg(ES8388_DACCONTROL4, &val), , "Error s_read_reg!");
+	val -= 10;
+	val = (val < 0)? 0:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL4, val), , "Error s_write_reg!");
+	CHECK(!s_write_reg(ES8388_DACCONTROL5, val), , "Error s_write_reg!");		
 }
 
-//反向调节音量
+//45.反向调节音量，pcm调节
 void drvSetTuneDown(void)
 {
+//	amixer_vol_control(PCM,10,'-');
+	unsigned char val = 0;
 
+	CHECK(!s_read_reg(ES8388_DACCONTROL4, &val), , "Error s_read_reg!");
+	val += 10;
+	val = (val > 0xc0)? 0xc0:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL4, val), , "Error s_write_reg!");
+	CHECK(!s_write_reg(ES8388_DACCONTROL5, val), , "Error s_write_reg!");
 }
 
-//增加面板扬声器音量
+//46.增加面板扬声器音量，输出2的左声道
 void drvAddSpeakVolume(int value)
 {
+//	amixer_vol_left_control(Output_2,value,'+');
+	CHECK(value > 0 && value <= 100, , "Error value out of range!");
+	unsigned char val = 0;
+	unsigned char val_max = 0x21;
+	unsigned char val_step = val_max*value/100;
 
+	CHECK(!s_read_reg(ES8388_DACCONTROL26, &val), , "Error s_read_reg!");
+	val += val_step;
+	val = (val > val_max)? val_max:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL26, val), , "Error s_write_reg!");	
 }
 
-//减少面板扬声器音量
+//47.减少面板扬声器音量，通道2的左声道
 void drvSubSpeakVolume(int value)
 {
+//	amixer_vol_left_control(Output_2,value,'-');
+	CHECK(value > 0 && value <= 100, , "Error value out of range!");
+	unsigned char val = 0;
+	unsigned char val_max = 0x21;
+	unsigned char val_step = val_max*value/100;
 
+	CHECK(!s_read_reg(ES8388_DACCONTROL26, &val), , "Error s_read_reg!");
+	val -= val_step;
+	val = (val < 0)? 0:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL26, val), , "Error s_write_reg!");
 }
 
-//设置扬声器音量值 参数范围为[0,100]
+//48.设置扬声器音量值 参数范围为[0,100]，通道2的左声道
 void drvSetSpeakVolume(int value)
 {
+//	amixer_vol_left_control(Output_2,value,' ');
+	CHECK(value > 0 && value <= 100, , "Error value out of range!");
+	// unsigned char val = 0;
+	// unsigned char val_max = 0x21;
+	value = 0x21*value/100;
 
+	//CHECK(!s_read_reg(ES8388_DACCONTROL26, &val), , "Error s_read_reg!");
+	//val -= val_step;
+	//val = (val < 0)? 0:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL26, value), , "Error s_write_reg!");
 }
 
-//增加手柄音量 参数范围为[0,100]
+//49.增加手柄音量 参数范围为[0,100]，通道2的右声道
 void drvAddHandVolume(int value)
 {
+	CHECK(value > 0 && value <= 100, , "Error value out of range!");
+	unsigned char val = 0;
+	unsigned char val_max = 0x21;
+	unsigned char val_step = val_max*value/100;
 
+	CHECK(!s_read_reg(ES8388_DACCONTROL25, &val), , "Error s_read_reg!");
+	val += val_step;
+	val = (val > val_max)? val_max:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL25, val), , "Error s_write_reg!");
 }
 
-//减少手柄音量
+//50.减少手柄音量，通道2的右声道
 void drvSubHandVolume(int value)
 {
+	CHECK(value > 0 && value <= 100, , "Error value out of range!");
+	unsigned char val = 0;
+	unsigned char val_max = 0x21;
+	unsigned char val_step = val_max*value/100;
 
+	CHECK(!s_read_reg(ES8388_DACCONTROL25, &val), , "Error s_read_reg!");
+	val -= val_step;
+	val = (val < 0)? 0:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL25, val), , "Error s_write_reg!");
 }
 
-//设置手柄音量值
+//51.设置手柄音量值，通道2的右声道
 void drvSetHandVolume(int value)
 {
+	CHECK(value >= 0 && value <= 100, , "Error value out of range!");
+	value = 0x21*value/100;
+	// unsigned char val = 0;
+	// unsigned char val_max = 0x21;
+	// unsigned char val_step = val_max*value/100;
 
+	// CHECK(!s_read_reg(ES8388_DACCONTROL25, &val), , "Error s_read_reg!");
+	// val -= val_step;
+	// val = (val < 0)? 0:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL25, value), , "Error s_write_reg!");
 }
 
-//增加耳机音量
+//52.增加耳机音量  通道1 的左右声道
 void drvAddEarphVolume(int value)
 {
+//	amixer_vol_control(Output_1,value,'+');
+	CHECK(value > 0 && value <= 100, , "Error value out of range!");
+	unsigned char val = 0;
+	unsigned char val_max = 0x21;
+	unsigned char val_step = val_max*value/100;
 
+//	CHECK(!s_read_reg(ES8388_DACCONTROL27, &val), , "Error s_read_reg!");
+	CHECK(!s_read_reg(ES8388_DACCONTROL24, &val), , "Error s_read_reg!");
+
+	val += val_step;
+	val = (val > val_max)? val_max:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL24, val), , "Error s_write_reg!");
+	CHECK(!s_write_reg(ES8388_DACCONTROL25, val), , "Error s_write_reg!");
 }
 
-//减少耳机音量
+//53.减少耳机音量，通道1左右声道
 void drvSubEarphVolume(int value)
 {
+//	amixer_vol_control(Output_1,value,'-');
+	CHECK(value > 0 && value <= 100, , "Error value out of range!");
+	unsigned char val = 0;
+	unsigned char val_max = 0x21;
+	unsigned char val_step = val_max*value/100;
 
+	//CHECK(!s_read_reg(ES8388_DACCONTROL27, &val), , "Error s_read_reg!");
+	CHECK(!s_read_reg(ES8388_DACCONTROL24, &val), , "Error s_read_reg!");
+	val -= val_step;
+	val = (val < 0)? 0:val;
+	CHECK(!s_write_reg(ES8388_DACCONTROL24, val), , "Error s_write_reg!");
+	CHECK(!s_write_reg(ES8388_DACCONTROL25, val), , "Error s_write_reg!");
 }
 
-//设置耳机音量值  参数范围为[0,100]
+//54.设置耳机音量值  参数范围为[0,100]，通道1左右声道
 void drvSetEarphVolume(int value)
 {
-
+//	amixer_vol_control(Output_1,value,' ');
+	CHECK(value >= 0 && value <= 100, , "Error value out of range!");
+	value = 0x21*value/100;
+	CHECK(!s_write_reg(ES8388_DACCONTROL24, value), , "Error s_write_reg!");
+	CHECK(!s_write_reg(ES8388_DACCONTROL25, value), , "Error s_write_reg!");
 }
 
-//打开手柄音频输出
+//55.打开手柄音频输出 通道2的右声道
 void drvEnableHandout(void)
 {
-
+	unsigned char val = 0;
+	CHECK(!s_read_reg(ES8388_DACPOWER, &val), , "Error s_read_reg!");
+	val |= (0x1 << 2);
+	CHECK(!s_write_reg(ES8388_DACPOWER, val), , "Error s_write_reg!");
 }
 
-//关闭手柄音频输出
+//56.关闭手柄音频输出 通道2的右声道
 void drvDisableHandout(void)
 {
-
+	unsigned char val = 0;
+	CHECK(!s_read_reg(ES8388_DACPOWER, &val), , "Error s_read_reg!");
+	val &= ~((unsigned char)0x1 << 2);
+	CHECK(!s_write_reg(ES8388_DACPOWER, val), , "Error s_write_reg!");
 }
 
-//打开耳机音频输出
+//57.打开耳机音频输出，通道1的左右声道
 void drvEnableEarphout(void)
 {
-
+	unsigned char val = 0;
+	CHECK(!s_read_reg(ES8388_DACPOWER, &val), , "Error s_read_reg!");
+	val |= (0x3 << 3);
+	CHECK(!s_write_reg(ES8388_DACPOWER, val), , "Error s_write_reg!");
 }
 
-//打开耳机音频输出
+//58.关闭耳机音频输出， 通道1的左右声道
 void drvDisableEarphout(void)
 {
-
+	unsigned char val = 0;
+	CHECK(!s_read_reg(ES8388_DACPOWER, &val), , "Error s_read_reg!");
+	val &= ~((unsigned char)0x3 << 3);
+	CHECK(!s_write_reg(ES8388_DACPOWER, val), , "Error s_write_reg!");
 }
 
-//选择面板麦克风语音输入
+//59.选择面板麦克风语音输入，输入通道1
 void drvSelectHandFreeMic(void)
 {
-
+	unsigned char val = 0;
+	CHECK(!s_read_reg(ES8388_ADCCONTROL2, &val), , "Error s_read_reg!");
+	val &= 0x0f;
+	CHECK(!s_write_reg(ES8388_ADCCONTROL2, val), , "Error s_write_reg!");
 }
 
-//选择手柄麦克风语音输入
+//60.选择手柄麦克风语音输入，输入通道2
 void drvSelectHandMic(void)
 {
-
+	unsigned char val = 0;
+	CHECK(!s_read_reg(ES8388_ADCCONTROL2, &val), , "Error s_read_reg!");
+	val &= 0x0f;
+	val |= 0x50;
+	CHECK(!s_write_reg(ES8388_ADCCONTROL2, val), , "Error s_write_reg!");
 }
 
-//选择耳机麦克风语音输入
+//61.选择耳机麦克风语音输入，输入通道2
 void drvSelectEarphMic(void)
 {
-
+	drvSelectHandMic();
 }
 
 

@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 09:57:14
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-07-28 16:48:39
+* @Last Modified time: 2022-07-28 17:24:31
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -150,21 +150,20 @@ int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
 	}
 
 	//msgbuf->types = TYPE_SEND; //给消息结构赋值，发送的类型是固定的TYPE_SEND
-	printf("debug: send type = %ld cmd = %d b = %d c = %d rt = %d\n",msgbuf->types,msgbuf->cmd,msgbuf->param1,msgbuf->param2,msgbuf->ret);
+	//printf("debug: send type = %ld cmd = %d b = %d c = %d rt = %d\n",msgbuf->types,msgbuf->cmd,msgbuf->param1,msgbuf->param2,msgbuf->ret);
     //发送消息
     if(msgsnd(msgid, msgbuf, sizeof(msgq_t)-sizeof(long),0) == 0)
     {
-    	printf("debug:msgsnd ok \n");
+    //	printf("debug:msgsnd ok \n");
     	//等待应答，等待的类型跟命令有关！！！！！
     	ret =  msgq_recv(ack_types,msgbuf,timeout);
     	if(ret == 0)    //正常在这返回0，仍然可能不是0. 
     	{
-    		printf("msgq_send and recv ok!!msgbuf.ret = %d\n",msgbuf->ret);
+    //		printf("msgq_send and recv ok!!msgbuf.ret = %d\n",msgbuf->ret);
     		//用param1返回数据
 			return 0;
 		}
     }  
-
     printf("msgsnd error!\n"); //这条路应该还是有问题的。打印一下错误提示
     fflush(stdout);
     return ret;   // 返回错误值

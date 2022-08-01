@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:45:55
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-07-28 16:35:59
+* @Last Modified time: 2022-07-29 11:30:11
 */
 
 #include <errno.h>
@@ -45,6 +45,8 @@ void print_help(void)
 	printf("f. 设置某一个led熄灭\n");
 	printf("g. 设置全部led点亮\n");
 	printf("h. 设置全部led熄灭\n");
+	printf("i. 获得led状态\n");
+	printf("j. 获得键盘类型\n");
 }
 
 
@@ -138,10 +140,16 @@ int main(int argc,char*argv[])
 {
 	float temp;
 	char cmd;
-
+	int ret;
 
 	printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
 
+
+	if(drvCoreBoardInit())  //API接口进行初始化
+	{
+		printf("ERROR: drvCoreBoardInit \n");
+		return -1;
+	}
 
 	print_help();
 
@@ -182,24 +190,27 @@ int main(int argc,char*argv[])
 				break;
 			case 'e': //5. 设置某一个led点亮
 				set_led_status(1);
-			//	set_lcd_bright();
 				break;
 			case 'f': //6. 设置某一个led熄灭
 				set_led_status(0);
-			//	set_lcd_bright();
 				break;	
 			case 'g': //7. 设置全部led点亮
 				drvLightAllLED();
-			//	set_lcd_bright();
 				break;
 			case 'h': //8. 设置全部led熄灭
 				drvDimAllLED();
-			//	set_lcd_bright();
 				break;
 			case 'i': //9. 获得led状态
 				get_led_status();
-			//	set_lcd_bright();
 				break;	
+			case 'j':	//10.获取键盘类型
+				ret = getKeyboardType();	
+				if(ret > 0)
+					printf("KeyboardType = %d\n",ret);
+				else
+					printf("ERROR: getKeyboardType ret = %d\n",ret);
+				break;
+
 			default:
 				print_help();
 		}

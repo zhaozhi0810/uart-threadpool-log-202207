@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-07-28 16:43:37
+* @Last Modified time: 2022-07-28 17:25:44
 */
 
 
@@ -75,9 +75,9 @@ static void answer_to_api(msgq_t *pmsgbuf)
 	msgbuf.cmd = pmsgbuf->cmd;
 	msgbuf.ret = 0;  //ret 等于0表示不返回有效数据（只包含应答），等于1，表示有数据返回
 
-
-	printf("debug:answer_to_api cmd = %d param1 = %d param2 = %d\n",
-			pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2);
+	//调试信息
+//	printf("debug:answer_to_api cmd = %d param1 = %d param2 = %d\n",
+//			pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2);
 
 	//1.	解析数据
 	switch(pmsgbuf->cmd)
