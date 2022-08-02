@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 09:57:14
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-07-28 17:24:31
+* @Last Modified time: 2022-08-02 15:33:34
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,6 +73,14 @@ int msgq_init(void)
     return 0;
 }
 
+
+
+//返回值0表示成功，其他表示失败
+int msgq_exit(void)
+{
+	MsgClear();   //清楚消息队列中的消息
+	return 0;
+}
 
 
 //接收消息

@@ -71,8 +71,8 @@ typedef enum
 *** 设置GPIO输入/输出
 */
 bool gpio_direction_set(const int pin, GPIO_DIR dir);
-
-
+//还原gpio
+bool gpio_direction_unset(const int pin);
 
 
 /*

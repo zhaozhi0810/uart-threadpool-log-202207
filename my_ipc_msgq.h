@@ -43,7 +43,8 @@ enum API_CMD_types{
 int msgq_init(void);
 
 
-
+//返回值0表示成功，其他表示失败
+int msgq_exit(void);
 
 //接收消息
 //参数 timeout_50ms 大于0时，表示非阻塞模式，等待的时间为timeout_50ms*50ms的值，等于0表示阻塞模式

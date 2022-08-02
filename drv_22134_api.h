@@ -111,7 +111,7 @@ int drvGetMicStatus(void);
 //1：插入
 int drvGetHMicStatus(void);
 
-typedef void (GPIO_NOTIFY_FUNC)(int gpio, int val);
+typedef void (*GPIO_NOTIFY_FUNC)(int gpio, int val);
 //int gpio：键值
 //int val：状态，1为按下或插入，0为松开或拔出
 //Gpio值：
@@ -123,7 +123,7 @@ typedef void (GPIO_NOTIFY_FUNC)(int gpio, int val);
 //34.PTT及耳机插入等事件上报回调
 void drvSetGpioCbk(GPIO_NOTIFY_FUNC cbk);
 
-typedef void (GPIO_NOTIFY_KEY_FUNC)(int gpio, int val);
+typedef void (*GPIO_NOTIFY_KEY_FUNC)(int gpio, int val);
 //int gpio：键值
 //int val：状态，1为按下，0为松开
 //35.面板按键事件上报回调

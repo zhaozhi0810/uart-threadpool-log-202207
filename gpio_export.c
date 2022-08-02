@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-29 10:06:39
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-07-29 10:26:33
+* @Last Modified time: 2022-08-02 15:29:58
 */
 
 #include <stdio.h>
@@ -98,6 +98,40 @@ static bool gpio_export(const int pin)
 
 
 
+static bool gpio_unexport(const int pin)
+{
+	/***** 1.检测是否已经配置GPIO *****/
+	if (is_gpio_export(pin) == true)
+	{
+		return true;
+	}
+
+	/***** 2.打开gpio export句柄 *****/
+	int export_fd = open("/sys/class/gpio/unexport", O_WRONLY);
+
+	if (export_fd < 0)
+	{
+		printf("export gpio%d failed \n", pin);
+		return false;
+	}
+
+	/***** 3.写入pin到export句柄 *****/
+	char export_buf[32] ={0};
+	int len = sprintf(export_buf, "%d", pin);
+
+	if (write(export_fd, export_buf, len) < 0)
+	{
+		close(export_fd);
+		printf("write export gpio%d failed \n", pin);
+		return false;
+	}
+
+	close(export_fd);
+	return true;
+}
+
+
+
 /*
 *** 设置GPIO输入/输出
 */
@@ -134,7 +168,21 @@ bool gpio_direction_set(const int pin, GPIO_DIR dir)
 }
 
 
+/*
+*** 还原设置GPIO引脚
+*/
+bool gpio_direction_unset(const int pin)
+{
+	if (is_gpio_export(pin) == true)
+	{
+		if (gpio_unexport(pin) == false)
+		{
+			printf("unexport gpio%d faild \n", pin);
+			return false;
+		}
+	}
 
+}
 
 /*
 *** 设置gpio 内置上拉使能

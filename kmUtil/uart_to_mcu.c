@@ -58,7 +58,7 @@ KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7,
 KEY_8, KEY_9, KEY_0, KEY_KPASTERISK, KEY_KPSLASH, KEY_UP,
 KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_KPENTER, KEY_KPPLUS, KEY_KPMINUS};
 
-
+#define JC_KEYBOARD_DRIVER_NAME		"jc_uart_keyboard"
 
 // QQUEUE get_key_cmd_queue( void )
 // {
@@ -128,10 +128,10 @@ static int setup_uinput_device( void )
 		printf("Unable to open /dev/uinput, err=%s\n", strerror(errno)); 
 		return -1; 
 	} 
-	printf("uinp_fd=%d\n", uinp_fd);
+	printf("debug : uinp_fd=%d\n", uinp_fd);
 	
 	memset(&uinp, 0, sizeof(uinp)); // Intialize the uInput device to NULL 
-	strncpy(uinp.name, "uart keyboard_mouse", UINPUT_MAX_NAME_SIZE); 
+	strncpy(uinp.name, JC_KEYBOARD_DRIVER_NAME, UINPUT_MAX_NAME_SIZE); 
 	uinp.id.version = 4; 
 	uinp.id.bustype = BUS_USB;
 	

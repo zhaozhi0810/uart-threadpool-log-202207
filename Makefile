@@ -1,5 +1,10 @@
 
+ARCH = `uname -m`
+#ifneq ($(strip , "$(ARCH)"),"aarch64")
 CROSS_COMPILE=aarch64-linux-gnu-
+#endif
+
+
 OBJS= libdrvapi22134.so  drv_22134_server  test_22134_api   #kmUtil/built-in.o
 
 
@@ -16,11 +21,11 @@ all: path $(obj-o)  $(OBJS)
 #	$(CROSS_COMPILE)gcc drv_22134_server.o threadpool.o my_ipc_msgq.o my_log.o kmUtil/built-in.o -o drv_22134_server -lpthread
 
 # mixer_scontrols.o
-libdrvapi22134.so:drv_22134_api.o gpio_export.o my_ipc_msgq.o audio-i2c/i2c_reg_rw.o    
+libdrvapi22134.so:drv_22134_api.o gpio_export.o my_ipc_msgq.o audio-i2c/i2c_reg_rw.o keyboard/keyboard.o   
 	$(CROSS_COMPILE)gcc $^ -o $@ -fPIC -shared
 
-test_22134_api:test_22134_api.o  libdrvapi22134.so
-	$(CROSS_COMPILE)gcc $^ -o $@ -L./ -ldrvapi22134
+test_22134_api:test_22134_api.o  libdrvapi22134.so 
+	$(CROSS_COMPILE)gcc $^ -o $@ -L./ -ldrvapi22134  -lpthread
 
 drv_22134_server:drv_22134_server.o threadpool.o my_ipc_msgq.o my_log.o kmUtil/queue.o  kmUtil/ComFunc.o  kmUtil/uart_to_mcu.o
 	$(CROSS_COMPILE)gcc $^ -o $@ -lpthread
@@ -56,6 +61,7 @@ obj-c =
 obj-c += $(wildcard *.c)
 obj-c += $(wildcard kmUtil/*.c)
 obj-c += $(wildcard audio-i2c/*.c)
+obj-c += $(wildcard keyboard/*.c)
 obj-o = 
 obj-o += $(patsubst %.c, %.o, $(obj-c))
 
@@ -73,7 +79,8 @@ DEPENDENCY_LIST = $(patsubst %.o,%.d,$(obj-o))
 .c.o:
 #	echo $(obj-c)
 
-	@echo "building file " $@    
+	@echo "building file " $@  
+#	@echo $(ARCH)  
 	@mkdir -p $(out-dir)/$(subst $(notdir $@),,$@)
 	@$(CROSS_COMPILE)gcc   $(INCLUDES) -w -c $< -MMD -MT $@ -o $@
 	@cp $@ $(out-dir)/$@
@@ -81,7 +88,7 @@ DEPENDENCY_LIST = $(patsubst %.o,%.d,$(obj-o))
 -include $(DEPENDENCY_LIST)
 
 path:
-	@[ ! -d kmUtil ] || mkdir -p $(out-dir)
+	@[ ! -d $(out-dir) ] || mkdir -p $(out-dir)
     
 clean:
 	rm *.o *.d libdrvapi22134.so  test_22134_api drv_22134_server

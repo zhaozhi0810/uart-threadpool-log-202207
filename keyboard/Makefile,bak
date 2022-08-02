@@ -1,0 +1,60 @@
+SHELL = /bin/bash
+
+CROSS_COMPILE=aarch64-linux-gnu- 
+
+AllDirs := $(shell ls -R | grep '^\./.*:$' | awk '{gsub(":","");print}') .
+#CUR_DIR:=$(shell find . -maxdepth 4 -type d)
+#AllDirs:=$(patsubst(./%,%,$(CUR_DIR)))
+#AllDirs:=$(basename $(patsubst(./%,%,$(CUR_DIR))))
+
+#echo $(AllDirs)
+Sources := $(foreach n,$(AllDirs) , $(wildcard $(n)/*.c))
+Objs := $(patsubst %.cpp,%.o, $(Sources))
+Deps := $(patsubst %.cpp,%.d, $(Sources))
+
+DIR_NAME := $(shell basename `pwd`)
+
+StaticLib := lib$(DIR_NAME).a
+DynamicLib := lib$(DIR_NAME).so
+Bin := $(DIR_NAME)
+
+
+#AllLibs : $(DynamicLib)
+#AllLibs : $(StaticLib) 
+
+all:
+	@echo "make all"
+	@echo $(StaticLib)
+	@echo $(Objs)
+	@echo $(Bin)
+	@echo "CUR_DIR " = $(CUR_DIR)
+	@echo "AllDirs=" $(AllDirs)
+	@echo $(DynamicLib)
+
+
+AllLibs : $(Bin)
+
+
+CC = $(CROSS_COMPILE)gcc
+CXXFLAGS = -g -O2 -fPIC -Wall
+CPPFLAGS = $(foreach n,$(AllDirs) , -I$(n))
+LDFLAGS = -lstdc
+
+
+$(StaticLib) : $(Objs)
+	ar rcs $@ $^
+$(DynamicLib) : $(Objs)
+	$(CC) -shared -o $@ $^ $(LDFLAGS)
+$(Bin) : $(Objs)
+	$(CC) $(Objs) -o $@
+%.d : %.cpp
+	$(CC) -MT"$(<:.c=.o) $@" -MM $(CXXFLAGS) $(CPPFLAGS) $< > $@
+
+sinclude $(Deps)
+
+
+.PHONY : clean
+clean: 
+	rm -f *.o  # $(Objs) $(Deps) $(StaticLib) $(DynamicLib) $(Bin)
+
+
