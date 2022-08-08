@@ -33,6 +33,8 @@ enum API_CMD_types{
 	eAPI_BTNGET_CMD,         //获取按键
 	eAPI_BTNEVENT_CMD,       //等待按键事件
 	eAPI_LCDONOFF_CMD,       //lcd开启关闭事件
+	eAPI_LEDSETPWM_CMD,      //led设置亮度
+	eAPI_BOART_TEMP_GET_CMD  //获得单片机的温度
 };
 
 

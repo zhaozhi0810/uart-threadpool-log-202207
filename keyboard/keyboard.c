@@ -59,6 +59,8 @@ static void *s_recv_event_thread(void *arg) {
 				bzero(&ts, sizeof(struct input_event));
 				if(read(event_dev_fd, &ts, sizeof(struct input_event)) != sizeof(struct input_event)) {
 					ERR("Error read with %d: %s", errno, strerror(errno));
+					if(errno == ENODEV)
+						exit(-1);  //进程退出 //s_recv_event_thread_exit = true;  //设备出现问题，退出
 					continue;
 				}
 				if(ts.type == EV_KEY) {
@@ -118,12 +120,13 @@ int keyboard_init(void) {
 	snprintf(event_dev_name, sizeof(event_dev_name), "/dev/input/event%d", input_device_num);
 //	snprintf(s_keyboard_info.keyboard_dev_name, sizeof(s_keyboard_info.keyboard_dev_name), "/dev/%s", JC_KEYBOARD_DRIVER_NAME);
 	CHECK(!pthread_create(&s_recv_key_event_thread_id, NULL, s_recv_event_thread, NULL), -1, "Error pthread_create with %d: %s", errno, strerror(errno));
+	pthread_detach(s_recv_key_event_thread_id);  //设置分离模式，自动释放资源
 	return 0;
 }
 
 int keyboard_exit(void) {
 	s_recv_event_thread_exit = true;
-	CHECK(!pthread_join(s_recv_key_event_thread_id, NULL), -1, "Error pthread_join with %d: %s", errno, strerror(errno));
+//	CHECK(!pthread_join(s_recv_key_event_thread_id, NULL), -1, "Error pthread_join with %d: %s", errno, strerror(errno));
 	return 0;
 }
 

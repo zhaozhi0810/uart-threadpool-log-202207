@@ -31,7 +31,9 @@ typedef enum
 	eMCU_LED_SETOFF_TYPE,    //设置对应的led灭
 	eMCU_LCD_SETONOFF_TYPE,  //lcd打开关闭
 	eMCU_KEY_CHANGE_TYPE,    //按键被修改上报
-    eMCU_LEDSETALL_TYPE
+    eMCU_LEDSETALL_TYPE,     //对所有led进行控制，点亮或者熄灭
+	eMCU_LEDSETPWM_TYPE,     //设置所有led的亮度 
+	eMCU_GET_TEMP_TYPE      //获得单片机内部温度
 }mcu_data_type;
 
 

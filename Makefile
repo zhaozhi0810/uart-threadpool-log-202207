@@ -5,7 +5,7 @@ CROSS_COMPILE=aarch64-linux-gnu-
 #endif
 
 
-OBJS= libdrvapi22134.so  drv_22134_server  test_22134_api   #kmUtil/built-in.o
+OBJS= libdrvapi22134.so  drv_22134_server  test_22134_api  test/drv722test #kmUtil/built-in.o
 
 
 all: path $(obj-o)  $(OBJS)
@@ -29,6 +29,10 @@ test_22134_api:test_22134_api.o  libdrvapi22134.so
 
 drv_22134_server:drv_22134_server.o threadpool.o my_ipc_msgq.o my_log.o kmUtil/queue.o  kmUtil/ComFunc.o  kmUtil/uart_to_mcu.o
 	$(CROSS_COMPILE)gcc $^ -o $@ -lpthread
+
+test/drv722test:test/main.o
+	[ -d test ] && make -C test
+
 
 #kmUtil/built-in.o:
 #	[ -d kmUtil ] && make -C kmUtil
@@ -92,8 +96,9 @@ path:
     
 clean:
 	rm *.o *.d libdrvapi22134.so  test_22134_api drv_22134_server
-	[ -d kmUtil ] && cd kmUtil && make clean
-	[ -d audio-i2c ] && cd audio-i2c && make clean
+	[ -d kmUtil ]  && make clean -C kmUtil
+	[ -d audio-i2c ] && make clean  -C audio-i2c
+	[ -d test ]  && make clean -C test
 	rm -rf $(out-dir)
     
 #静态模式

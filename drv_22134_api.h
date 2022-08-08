@@ -181,5 +181,7 @@ void drvSelectHandMic(void);
 //61.选择耳机麦克风语音输入
 void drvSelectEarphMic(void);
 
+//打印编译时间
+void drvShowVersion(void);
 #endif
 

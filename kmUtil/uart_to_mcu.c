@@ -192,7 +192,7 @@ static int setup_uinput_device( void )
 
 
 
-//´®¿ÚÏûÏ¢´¦Àí
+//串口数据接收处理
 static void com_message_handle(void)
 {		
 	if(com_recv_data[1]>0 && com_recv_data[1] < 37)   //°´¼üÖµ
@@ -200,7 +200,7 @@ static void com_message_handle(void)
 		printf("key = %d %s\n",com_recv_data[1],com_recv_data[2]?"press":"release");
 		send_a_button_ievent(key_map[com_recv_data[1]-1], com_recv_data[2]);
 	}
-	else  //ÆäËû¶¨ÒåµÄ½Ó¿ÚÊý¾Ý
+	else  //除了按键之外的其他数据的处理
 	{
 		switch(com_recv_data[1])
 		{
@@ -208,7 +208,9 @@ static void com_message_handle(void)
 			case eMCU_LED_SETOFF_TYPE: //ÉèÖÃled OFF		
 			case eMCU_LCD_SETONOFF_TYPE:  //ÉèÖÃlcd ´ò¿ª»òÕß¹Ø±Õ		
 			case eMCU_LEDSETALL_TYPE:  //ÉèÖÃËùÓÐµÄled ´ò¿ª»òÕß¹Ø±Õ			
-			case eMCU_LED_STATUS_TYPE:		  //led ×´Ì¬»ñÈ¡			
+			case eMCU_LEDSETPWM_TYPE:  //设置led的亮度
+			case eMCU_GET_TEMP_TYPE:   //获得单片机的内部温度
+			case eMCU_LED_STATUS_TYPE:		  //获得某个led的状态			
 				uart_recv_flag = com_recv_data[1] | (com_recv_data[2] <<8);  //¸ß8Î»±íÊ¾×´Ì¬		
 				break;
 			default:
@@ -380,9 +382,9 @@ void* mcu_recvSerial_thread(void* arg)
 
 //·¢ËÍÊý¾Ý£¬²»ÓÉµ¥¶ÀµÄÏß³Ì´¦ÀíÁË¡£dataÖ»ÐèÒª°üº¬Êý¾ÝÀàÐÍºÍÊý¾Ý¡£Í·²¿ºÍcrcÓÉ¸Ãº¯ÊýÍê³É¡£
 /*
- * data ÓÃÓÚ·¢ËÍµÄÊý¾Ý£¬²»ÐèÒª°üÀ¨Ö¡Í·ºÍÐ£ÑéºÍ£¬Ö»Òª°üÀ¨Êý¾ÝÀàÐÍºÍÊý¾Ý£¨¹²2¸ö×Ö½Ú£©
- * ·µ»ØÖµ
- * 	0±íÊ¾³É¹¦£¬ÆäËû±íÊ¾Ê§°Ü
+ *
+ * 如果需要返回数据，从data【0】 读取
+ * 
  * */
 int send_mcu_data(const void* data)
 {	

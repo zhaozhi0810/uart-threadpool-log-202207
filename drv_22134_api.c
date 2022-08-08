@@ -71,6 +71,7 @@ static int print_debug = 0;
   #define MY_PRINTF(fmt, args...)   
 #endif
 
+static const char* g_build_time_str = "Buildtime :"__DATE__" "__TIME__;   //获得编译时间
 
 
 //val 非0表示打印一般的调试信息，0则不打印调试信息，默认不打印
@@ -83,6 +84,43 @@ void set_print_debug(int val)
 
 static int CoreBoardInit = 0;   //初始化了吗？初始化成功为1，失败为-1。
 static int KeyboardTypepins[3]={-1,-1,-1};  //用于键盘识别的
+
+
+static int lock_fd = -1;
+//int atexit(void (*function)(void));
+//进程正常结束时关闭文件
+static void at_exit_close_file(void)
+{ 
+	if(lock_fd >= 0)
+		close(lock_fd);
+	printf("at_exit_close_file\n");
+	drvCoreBoardExit();  //函数中处理了防止多次执行
+}
+//检查进程是否正在运行，防止运行多个进程
+static int isProcessRunning()
+{	
+    lock_fd = open("/tmp/drvApi22134.lock",O_CREAT|O_RDWR,0666);
+    if(lock_fd < 0)
+    {
+    	printf("ERROR: open /tmp/drvApi22134.lock\n");
+    	return -1;
+    }	
+    int rc = flock(lock_fd,LOCK_EX|LOCK_NB); //flock加锁，LOCK_EX -- 排它锁；LOCK_NB -- 非阻塞模式
+    if(rc)  //返回值非0，无法正常持锁
+    {
+        if(EWOULDBLOCK == errno)    //尝试锁住该文件的时候，发现已经被其他服务锁住,errno==EWOULDBLOCK
+        {
+        //	close(lock_fd);	
+            printf("Already Running!\n");
+            return -1; 
+        }
+    }
+//    close(lock_fd);	//不能关闭文件   
+    return 0;   //成功加锁。
+}
+
+
+
 
 
 //api发送数据给服务器，并且等待服务器应答，超时时间1s
@@ -174,12 +212,56 @@ static int getKeyboardTypePinInit(void)
 
 
 
+
+//ps -ef | grep drv_22134_server | grep -v grep | wc -l
+//尝试启动server进程
+static int start_server_process(void)
+{
+	FILE *ptr = NULL;
+	char cmd[] = "ps -ef | grep drv_22134_server | grep -v grep | wc -l";
+	int status = 0;
+	char buf[64];
+	int count;
+
+	if((ptr = popen(cmd, "r")) == NULL)
+	{
+		printf("popen err\n");
+		return -1;
+	}
+	memset(buf, 0, sizeof(buf));
+	if((fgets(buf, sizeof(buf),ptr))!= NULL)//获取进程和子进程的总数
+	{
+		count = atoi(buf);
+		if(count <= 0)//当进程数小于等于0时，说明进程不存在
+		{
+			system("/root/drv_22134_server");
+			printf("api start drv_22134_server \n");
+		}
+	}
+	pclose(ptr);
+	return 0;
+}
+
+
+
 //1. 核心板初始化函数
 //-1：初始化失败
 //0：初始化成功
 int drvCoreBoardInit(void)
 {
 	int ret ;
+
+	printf("drvCoreBoardInit running,Buildtime %s\n",g_build_time_str);
+
+	if(isProcessRunning())   //防止服务程序被多次运行
+	{
+		printf("isProcessRunning return !0\n");
+		exit(-1);   //结束进程
+	}
+
+	start_server_process();
+	atexit(at_exit_close_file); //注册一个退出函数
+
 	ret = msgq_init();
 	if(ret)  //不为0，表示出错！！
 	{
@@ -209,7 +291,7 @@ int drvCoreBoardInit(void)
 	ret = keyboard_init();  //按键事件处理线程初始化 
 	if(ret) //不为0，表示出错！！
 	{
-		DEBUG_PRINTF("ERROR: i2c_adapter_init ret = %d\n",ret);
+		DEBUG_PRINTF("ERROR: keyboard_init ret = %d\n",ret);
 		CoreBoardInit = -1;   //记录初始化失败
 		return ret;
 	}
@@ -222,6 +304,11 @@ int drvCoreBoardInit(void)
 
 void drvCoreBoardExit()
 {
+	static int exited = 0;
+
+	if(exited)
+		return;
+
 	keyboard_exit();   //键盘处理线程退出
 	i2c_adapter_exit();  //iic的文件关闭
 	
@@ -231,6 +318,7 @@ void drvCoreBoardExit()
 
 	msgq_exit();  //清除消息队列中的消息
 	CoreBoardInit = 0;   //未初始化了！！！
+	exited = 1;   //已经执行过该函数
 	return;
 }
 
@@ -517,9 +605,21 @@ float drvGetCPUTemp(void)
 //22. 获取核心板温度
 float drvGetBoardTemp(void)
 {
-	MY_PRINTF("nothing todo 2022-07-27\n");
+	int param = 0;   //参数需要一个指针，返回函数返回值
+	if(assert_init())  //未初始化
+		return;
+//	MY_PRINTF("nothing todo 2022-07-27\n");
+	//改为从单片机获得温度
+	if(api_send_and_waitack(eAPI_BOART_TEMP_GET_CMD,0,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	{
+		printf("error : drvGetBoardTemp \n");
+		return 0.0;
+	}
+	printf("drvGetBoardTemp param = %d\n",param);
+	return param;   //返回的温度只有整数部分！！
+
 	//nothing todo 2022-07-27	
-	return 0.0;
+	//return 0.0;
 }
 
 //23. 获取当前RTC值
@@ -585,7 +685,14 @@ long drvSetRTC(long secs)
 //25. 设置LED灯亮度  参数范围为[0,0x64]
 void drvSetLedBrt(int nBrtVal)
 {
-	if(!assert_init()) return;   //初始化失败，直接退出
+	int param = 1;
+	if(assert_init())  //未初始化
+		return;
+
+	if(api_send_and_waitack(eAPI_LEDSETPWM_CMD,nBrtVal,&param))  //发送的第二个参数表示亮度，第三个无意义
+	{
+		printf("error : drvSetLedBrt ,nBrtVal = %d\n",nBrtVal);
+	}
 }
 
 
@@ -795,13 +902,15 @@ void drvSetTuneUp(void)
 {
 //	amixer_vol_control(PCM,10,'+');
 //	CHECK(value > 0 && value <= 100, , "Error value out of range!");
-	unsigned char val = 0;
+	int val = 0;
 	// unsigned char val_max = 0x21;
 	// unsigned char val_step = val_max*value/100;
 
 	CHECK(!s_read_reg(ES8388_DACCONTROL4, &val), , "Error s_read_reg!");
+	printf("drvSetTuneUp val = %d\n",val);
 	val -= 10;
-	val = (val < 0)? 0:val;
+	val = (val <= 0)? 0:val;
+	printf("2 drvSetTuneUp val = %d\n",val);
 	CHECK(!s_write_reg(ES8388_DACCONTROL4, val), , "Error s_write_reg!");
 	CHECK(!s_write_reg(ES8388_DACCONTROL5, val), , "Error s_write_reg!");		
 }
@@ -814,7 +923,7 @@ void drvSetTuneDown(void)
 
 	CHECK(!s_read_reg(ES8388_DACCONTROL4, &val), , "Error s_read_reg!");
 	val += 10;
-	val = (val > 0xc0)? 0xc0:val;
+	val = (val >= 0xc0)? 0xc0:val;
 	CHECK(!s_write_reg(ES8388_DACCONTROL4, val), , "Error s_write_reg!");
 	CHECK(!s_write_reg(ES8388_DACCONTROL5, val), , "Error s_write_reg!");
 }
@@ -1015,7 +1124,11 @@ void drvSelectEarphMic(void)
 
 
 
-
+//打印编译时间
+void drvShowVersion(void)
+{
+	printf("drv_so version printf,Buildtime %s\n",g_build_time_str);;
+}
 
 
 

@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-07-28 17:25:44
+* @Last Modified time: 2022-08-08 20:26:07
 */
 
 
@@ -62,6 +62,104 @@ struct threadpool* pool;  //线程池
 // 	send_mcu_data(mcu_cmd_buf);
 // }
 
+static size_t get_executable_path( char* processname, size_t len)
+{
+    char* path_end;
+    char processdir[512] = {0};
+    if(readlink("/proc/self/exe", processdir,sizeof processdir) <=0)
+            return -1;
+    path_end = strrchr(processdir,  '/');
+    if(path_end == NULL)
+            return -1;
+    ++path_end;
+    strncpy(processname, path_end,len);
+    *path_end = '\0';
+    return (size_t)(path_end - processdir);
+}
+
+//ps -ef | grep drv_22134_server | grep -v grep | wc -l
+//尝试启动server进程
+//返回0表示没有该进程，非0表示存在进程了
+static int is_server_process_start(void)
+{
+	FILE *ptr = NULL;
+	char cmd[256];
+	int status = 0;
+	char buf[64];
+	int count;
+
+	char name[64];
+
+	if(get_executable_path( name, sizeof name) > 0)
+	{
+		snprintf(cmd,sizeof cmd,"ps -ef | grep %s | grep -v grep | wc -l",name);
+	}
+	else
+		snprintf(cmd,sizeof cmd,"ps -ef | grep %s | grep -v grep | wc -l","drv_22134_server");
+
+
+	printf("cmd = %s\n",cmd);
+
+	if((ptr = popen(cmd, "r")) == NULL)
+	{
+		printf("popen err\n");
+		return -1;
+	}
+	memset(buf, 0, sizeof(buf));
+	if((fgets(buf, sizeof(buf),ptr))!= NULL)//获取进程和子进程的总数
+	{
+		count = atoi(buf);
+		if(count < 2)//当进程数小于等于2时，说明进程不存在, 1表示有一个，是自己
+		{
+			pclose(ptr);
+			printf("no server process \n");
+			return 0;  //系统中没有该进程
+			// system("/root/drv_22134_server");
+			// printf("api start drv_22134_server \n");
+		}
+	}
+	pclose(ptr);
+	return 1;
+}
+
+
+
+
+
+//检查进程是否正在运行，防止运行多个进程
+//返回0表示没有该进程，-1表示存在进程了
+static int isProcessRunning()
+{
+#if 0	
+    int lock_fd = open("/tmp/drvServer22134.lock",O_CREAT|O_RDWR,0666);
+    if(lock_fd < 0)
+    {
+    	printf("ERROR: open /tmp/drvServer22134.lock\n");
+    	return -1;
+    }	
+    int rc = flock(lock_fd,LOCK_EX|LOCK_NB); //flock加锁，LOCK_EX -- 排它锁；LOCK_NB -- 非阻塞模式
+    if(rc)  //返回值非0，无法正常持锁
+    {
+        if(EWOULDBLOCK == errno)    //尝试锁住该文件的时候，发现已经被其他服务锁住,errno==EWOULDBLOCK
+        {
+        //	close(lock_fd);	
+            printf("Already Running!\n");
+            return -1; 
+        }
+    }
+//    close(lock_fd);	//不能关闭文件
+#else
+	int ret = is_server_process_start();
+	printf("ret = %d\n",ret);
+	return ret;   //返回0表示没有该进程，非0则表示有或者出错
+    
+#endif    
+    return 0;   //成功加锁。
+}
+
+
+
+
 
 
 //应答客户的cpi的查询，可以在客户端并发
@@ -112,13 +210,27 @@ static void answer_to_api(msgq_t *pmsgbuf)
 				msgbuf.param1 = mcu_cmd_buf[0];
 			}
 			break;
+		case eAPI_LEDSETPWM_CMD:    //设置led的亮度，要发给单片机
+			mcu_cmd_buf[0] = eMCU_LEDSETPWM_TYPE;  //设置所有的led pwm			
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //pwm值
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			break;
+		case eAPI_BOART_TEMP_GET_CMD:  //获取单片机内部温度，只有整数部分
+			mcu_cmd_buf[0] = eMCU_GET_TEMP_TYPE;  //led 获取单片机内部温度				
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //无意义
+			if(0 == send_mcu_data(mcu_cmd_buf))  //返回值为0，表示收到了数据
+			{//获得mcu的数据？？
+				msgbuf.ret = 1; //表示又数据返回
+				msgbuf.param1 = mcu_cmd_buf[0];
+			}
+			break;
 		default:
 			msgbuf.ret = -1;   //不能是别的命令
 		break;
 #endif		
 	}	
 
-	//3.做出应答
+	//3.做出应答给API
 	if(0!= msgq_send_ack(&msgbuf))   //应答发出后，不需要等待
 		printf("error : msgq_send\n");
 }
@@ -159,7 +271,7 @@ static void* msg_connect(void * data)
 		{
 			//调试打印						
 			{				
-				printf("type = %ld cmd = %d b = %d c = %d rt = %d\n",pmsgbuf->types,pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2,pmsgbuf->ret);
+			//	printf("type = %ld cmd = %d b = %d c = %d rt = %d\n",pmsgbuf->types,pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2,pmsgbuf->ret);
 				threadpool_add_job(pool,api_answer_thread,pmsgbuf);
 			}
 		}
@@ -188,6 +300,19 @@ int main(int argc, char *argv[])
 	
 	printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
 
+	if(isProcessRunning())   //防止服务程序被多次运行
+	{
+		printf("isProcessRunning return !0\n");
+		return 0;
+	}	
+
+	//转为守护进程
+	if(daemon(0,0))   //daemon 2022-08-08
+	{
+		perror("daemon");
+		return -1;
+	}
+
 	//串口通信	
 	if(0 != uart_init(argc, argv))
 	{
@@ -202,10 +327,11 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+#if 1
 		//日志记录
-	// if(0 !=log_init())  //自动开了线程
-	// 	printf("ERROR: log thread init!!");
-
+	 if(0 !=log_init())  //自动开了线程
+	 	printf("ERROR: log thread init!!");
+#endif
 	//线程池初始化
 	pool = threadpool_init(4,6);  //初始有多少线程，最多有多少任务排队
 

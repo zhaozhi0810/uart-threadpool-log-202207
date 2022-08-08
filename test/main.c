@@ -26,6 +26,10 @@
 
 #define WATCHDOG_TIMEOUT			(20)	// s
 
+static const char* g_build_time_str = "Buildtime :"__DATE__" "__TIME__;   //获得编译时间
+
+
+
 enum {
 	TEST_ITEM_WATCHDOG_ENABLE,
 	TEST_ITEM_WATCHDOG_DISABLE,
@@ -70,6 +74,8 @@ enum {
 	TEST_ITEM_SET_RTC,
 	TEST_ITEM_GET_HEADSET_INSERT_STATUS,
 	TEST_ITEM_GET_HANDLE_INSERT_STATUS,
+	TEST_ITEM_SET_TUNE_UP,
+	TEST_ITEM_SET_TUNE_DOWN
 };
 
 extern int drvCoreBoardExit(void);
@@ -122,6 +128,8 @@ static void s_show_usage(void) {
 	printf("\t%2d - Set RTC\n", TEST_ITEM_SET_RTC);
 	printf("\t%2d - Get headset insert status\n", TEST_ITEM_GET_HEADSET_INSERT_STATUS);
 	printf("\t%2d - Get handle insert status\n", TEST_ITEM_GET_HANDLE_INSERT_STATUS);
+	printf("\t%2d - Set tune up\n", TEST_ITEM_SET_TUNE_UP);
+	printf("\t%2d - Set tune Down\n", TEST_ITEM_SET_TUNE_DOWN);
 	printf("\tOther - Exit\n");
 }
 
@@ -170,6 +178,9 @@ static void *s_watchdog_feed_thread(void *param) {
 int main(int args, char *argv[]) {
 	int test_item_index = -1;
 	pthread_t watchdog_feed_thread_id = 0;
+
+
+	printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
 
 	INFO("Enter %s\n", __func__);
 	CHECK(!s_signal_init(), -1, "Error s_signal_init!");
@@ -466,8 +477,16 @@ int main(int args, char *argv[]) {
 			INFO("Hand %s!\n", status? "insert":"no insert");
 			break;
 		}
+		case TEST_ITEM_SET_TUNE_UP:  //音量增加
+			drvSetTuneUp();
+		break;
+		case TEST_ITEM_SET_TUNE_DOWN:  //音量减小
+			drvSetTuneDown();
+		break;
+
 		default:
 			s_main_thread_exit = true;
+			printf("%s exit,Buildtime %s\n",argv[0],g_build_time_str);
 			break;
 		}
 	}

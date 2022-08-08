@@ -21,6 +21,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <signal.h>
+
 
 #define _GNU_SOURCE
 
@@ -31,8 +33,9 @@ static int pipe_read_fd;
 #define DAY10_SECS (60*60*24*10)     //10天的秒数
 
 static void* log_thread(void* arg);
+static 	int log_fd = -1;   //用于输出的文件描述符
 
-#define LOG_PATH "./log"
+#define LOG_PATH "/root/log"    //指定日志目录，需要绝对路径，server一般是守护进程，不指定将在根目录下。
 
 
 
@@ -113,7 +116,19 @@ static int delete_outdate_file(void)
 
 
 
+/*用定时器来处理硬盘同步信息*/
+void alarm_sig_handler(int signo) {
+ 	printf( "debug signo = %d\n " ,signo);
 
+ 	if(signo == SIGALRM)
+ 	{
+ 		alarm(30);   //30秒触发
+ 		if(log_fd>=0)
+ 			syncfs(log_fd);
+ 		else
+ 			alarm(0);  //关闭定时器
+ 	}
+}
 
 
 //打开文件，追加模式
@@ -178,8 +193,12 @@ go_on:
 	}
     pthread_detach(thread);   //设置分离模式
 	
+    signal(SIGALRM,alarm_sig_handler);  //注册了定时函数
+    alarm(30);   //30秒触发
+
 	return 0;	
 }
+
 
 
 
@@ -195,7 +214,7 @@ static void* log_thread(void* arg)
 	int offset = 0;;
 	int len = 0;
 	int ret;
-	int log_fd = -1;   //用于输出的文件描述符
+
 	int last_year=0,last_month=0,last_day=0;   //保存上次的日期
 	char file_name[128] = {LOG_PATH};
 	char cmd[128] = {"/bin/sh find "};
@@ -244,7 +263,7 @@ static void* log_thread(void* arg)
 			delete_outdate_file();
 		}
 			
-		snprintf(buf_time,sizeof(buf_time),"[%4d_%2d_%2d %2d:%2d:%2d]",tim.tm_year+1900,tim.tm_mon+1,tim.tm_mday
+		snprintf(buf_time,sizeof(buf_time),"[%4d_%02d_%02d %02d:%02d:%02d]",tim.tm_year+1900,tim.tm_mon+1,tim.tm_mday
 																			,tim.tm_hour,tim.tm_min,tim.tm_sec);			
 		//write(log_fd,buf_time,strlen(buf_time));
 		//write(log_fd,buf,strlen(buf));
