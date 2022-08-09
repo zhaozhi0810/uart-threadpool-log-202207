@@ -14,8 +14,8 @@
 #include <stdbool.h>
 //#include <linux/input.h>
 #include <linux/rtc.h>
-#include <linux/ioctl.h>
-
+//#include <linux/ioctl.h>
+#include <sys/ioctl.h>
 // #include <sys/types.h>
 // #include <sys/stat.h>
 // #include <fcntl.h>
@@ -23,11 +23,12 @@
 #include "drv_22134_api.h"
 #include "my_ipc_msgq.h"  //用于与串口程序通信！！
 #include "gpio_export.h"
-#include "mixer_scontrols.h"   //音频控制
-#include "audio-i2c/codec.h"
-#include "audio-i2c/debug.h"
+//#include "mixer_scontrols.h"   //音频控制
+#include "codec.h"
+#include "debug.h"
+#include "i2c_reg_rw.h"
 #include "drv_22134_server.h"
-#include "keyboard/keyboard.h"
+#include "keyboard.h"
 /*
 	与串口通信部分，使用msgq的方式，发送id为678，接收id为234
 
@@ -364,7 +365,7 @@ int drvCoreBoardInit(void)
 
 
 
-void drvCoreBoardExit()
+void drvCoreBoardExit(void)
 {
 	static int exited = 0;
 
@@ -667,7 +668,7 @@ float drvGetBoardTemp(void)
 {
 	int param = 0;   //参数需要一个指针，返回函数返回值
 	if(assert_init())  //未初始化
-		return;
+		return 0.0;
 //	MY_PRINTF("nothing todo 2022-07-27\n");
 	//改为从单片机获得温度
 	if(api_send_and_waitack(eAPI_BOART_TEMP_GET_CMD,0,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
@@ -966,11 +967,11 @@ void drvSetTuneUp(void)
 	// unsigned char val_max = 0x21;
 	// unsigned char val_step = val_max*value/100;
 
-	CHECK(!s_read_reg(ES8388_DACCONTROL4, &val), , "Error s_read_reg!");
-	printf("drvSetTuneUp val = %d\n",val);
+	CHECK(!s_read_reg(ES8388_DACCONTROL4, (void*)&val), , "Error s_read_reg!");
+//	printf("drvSetTuneUp val = %d\n",val);
 	val -= 10;
 	val = (val <= 0)? 0:val;
-	printf("2 drvSetTuneUp val = %d\n",val);
+//	printf("2 drvSetTuneUp val = %d\n",val);
 	CHECK(!s_write_reg(ES8388_DACCONTROL4, val), , "Error s_write_reg!");
 	CHECK(!s_write_reg(ES8388_DACCONTROL5, val), , "Error s_write_reg!");		
 }

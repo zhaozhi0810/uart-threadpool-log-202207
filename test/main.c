@@ -78,7 +78,7 @@ enum {
 	TEST_ITEM_SET_TUNE_DOWN
 };
 
-extern int drvCoreBoardExit(void);
+//extern int drvCoreBoardExit(void);
 
 static bool s_main_thread_exit = false;
 static bool s_watchdog_feed_thread_exit = false;

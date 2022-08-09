@@ -26,7 +26,6 @@
 #include "uart_to_mcu.h"
 //#include "Common.h"
 
-
 /*global defines*/
 static QUEUE keyCmdQueue;
 //static QUEUE mouseCmdQueue;
@@ -114,10 +113,8 @@ static void send_a_button_ievent(char VK, char VKState)  //1°´ÏÂ£¬ 0µ¯Æ
 } 
 
 
-
-
 /* Setup the uinput device */ 
-static int setup_uinput_device( void ) 
+static int setup_uinput_device(void) 
 { 
 	// Temporary variable 
 	int i=0; 

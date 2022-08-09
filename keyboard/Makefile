@@ -1,24 +1,30 @@
-#编译所有子目录
-SUBDIRS=`ls -d */ | grep -v 'bin' | grep -v 'lib' | grep -v 'include'`
 
-#编译指定子目录
-#SUBDIRS=dir1 dir2 dir3
 
-define make_subdir
- @for subdir in $(SUBDIRS) ; do \
- ([ -d $$subdir ] && cd $$subdir && make $1) \
- done;
-endef
+CROSS_COMPILE=aarch64-linux-gnu-
 
-all:
-	$(call make_subdir,all)
- 
-install :
-	$(call make_subdir,install)
- 
-debug:
-	$(call make_subdir,debug)
+
+obj-c =
+obj-c += $(wildcard *.c)
+obj-o = 
+obj-o += $(patsubst %.c, %.o, $(obj-c))
+
+DEPENDENCY_LIST = $(patsubst %.o,%.d,$(obj-o))
+-include $(DEPENDENCY_LIST)
+
+
+CFLAGS= -c  
+CFLAGS += -I../
+  	
+built-in.o:$(obj-o)
+	@echo "Create target " $@
+	@$(CROSS_COMPILE)ld -EL -r -o $@ $^ 
+
+
+%.o:%.c 
+	@echo "building file " $@
+	@$(CROSS_COMPILE)gcc $(CFLAGS) $<
+	@$(CROSS_COMPILE)gcc  -w $(CFLAGS) $< -MMD -MT $@ -o $@
+
+.PHONY:clean
 clean:
-	$(call make_subdir,clean) 
-
-
+	@rm -f *.o *.d

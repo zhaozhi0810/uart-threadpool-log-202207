@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <linux/input.h>
+#include <stdlib.h>
 
 #include "debug.h"
 // #include "drv722.h"

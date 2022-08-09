@@ -10,7 +10,6 @@
 
 
 
-
 //1. 核心板初始化函数
 //-1：初始化失败
 //0：初始化成功
@@ -183,5 +182,6 @@ void drvSelectEarphMic(void);
 
 //打印编译时间
 void drvShowVersion(void);
+void drvCoreBoardExit(void);
 #endif
 
