@@ -90,35 +90,24 @@ static int lock_fd = -1;
 //int atexit(void (*function)(void));
 //进程正常结束时关闭文件
 static void at_exit_close_file(void)
-{ 
-	if(lock_fd >= 0)
-		close(lock_fd);
+{ 	
 	printf("at_exit_close_file\n");
 	drvCoreBoardExit();  //函数中处理了防止多次执行
 }
-//检查进程是否正在运行，防止运行多个进程
-static int isProcessRunning()
-{	
-    lock_fd = open("/tmp/drvApi22134.lock",O_CREAT|O_RDWR,0666);
-    if(lock_fd < 0)
-    {
-    	printf("ERROR: open /tmp/drvApi22134.lock\n");
-    	return -1;
-    }	
-    int rc = flock(lock_fd,LOCK_EX|LOCK_NB); //flock加锁，LOCK_EX -- 排它锁；LOCK_NB -- 非阻塞模式
-    if(rc)  //返回值非0，无法正常持锁
-    {
-        if(EWOULDBLOCK == errno)    //尝试锁住该文件的时候，发现已经被其他服务锁住,errno==EWOULDBLOCK
-        {
-        //	close(lock_fd);	
-            printf("Already Running!\n");
-            return -1; 
-        }
-    }
-//    close(lock_fd);	//不能关闭文件   
-    return 0;   //成功加锁。
-}
 
+
+
+//需要单片机通信的，就需要初始化，所以不是所有的api都需要这么做
+static int assert_init(void)
+{	
+	if(CoreBoardInit!=1) //没有初始化
+	{
+		drvCoreBoardInit();  //进行初始化
+		if(CoreBoardInit!=1)  //还是失败？？？
+			return -1;
+	}
+	return 0;
+}
 
 
 
@@ -132,6 +121,7 @@ static int api_send_and_waitack(int cmd,int param1,int *param2)
 	msgbuf.types = TYPE_API_SENDTO_SERVER;  //发送的信息类型
 	msgbuf.cmd = cmd;      //结构体赋值
 	msgbuf.param1 = param1;
+//	printf("API DEBUG: param1 = %d msgbuf.param1 = %d\n",param1,msgbuf.param1);
 	if(param2)
 		msgbuf.param2 = *param2;
 	else //空指针
@@ -210,11 +200,37 @@ static int getKeyboardTypePinInit(void)
 	return 0;
 }
 
+static int my_system(char* cmd)
+{
+	pid_t fpid; //fpid表示fork函数返回的值
 
+	if(cmd == NULL)  //空指针
+ 		return -1;
+
+ 	int ret = access(cmd, F_OK | X_OK);  //文件存在并且可执行吗？
+ 	if(ret)  //返回0成功，-1失败
+ 	{
+ 		printf("access %s return -1\n",cmd);
+ 		return -1;
+ 	}
+
+    fpid = fork();
+    if (fpid < 0)
+    {    
+    	printf("error in fork!");
+    	return -1;
+	}
+    else if (fpid == 0) {
+       execl(cmd, cmd, NULL);
+    } else {   //父进程
+        return 0;
+    }
+}
 
 
 //ps -ef | grep drv_22134_server | grep -v grep | wc -l
 //尝试启动server进程
+//返回0表示server进程已经存在，-1表示出错
 static int start_server_process(void)
 {
 	FILE *ptr = NULL;
@@ -234,14 +250,58 @@ static int start_server_process(void)
 		count = atoi(buf);
 		if(count <= 0)//当进程数小于等于0时，说明进程不存在
 		{
-			system("/root/drv_22134_server");
+			my_system("/root/drv_22134_server");    //system 会启动两个进程，会导致判断出现一点问题
 			printf("api start drv_22134_server \n");
+			usleep(500000);  //等待一下
 		}
 	}
 	pclose(ptr);
 	return 0;
 }
 
+
+
+//检查进程是否正在运行，防止运行多个进程
+//返回0，表示第一次启动API，否则为多次，则应该不允许启动
+static int isProcessRunning()
+{	
+#if 0
+    lock_fd = open("/tmp/drvApi22134.lock",O_CREAT|O_RDWR,0666);
+    if(lock_fd < 0)
+    {
+    	printf("ERROR: open /tmp/drvApi22134.lock\n");
+    	return -1;
+    }	
+    int rc = flock(lock_fd,LOCK_EX|LOCK_NB); //flock加锁，LOCK_EX -- 排它锁；LOCK_NB -- 非阻塞模式
+    if(rc)  //返回值非0，无法正常持锁
+    {
+        if(EWOULDBLOCK == errno)    //尝试锁住该文件的时候，发现已经被其他服务锁住,errno==EWOULDBLOCK
+        {
+        //	close(lock_fd);	
+            printf("API: Already Running!\n");
+            return -1; 
+        }
+    }
+    printf("API: Allow to Running!\n");
+//    close(lock_fd);	//不能关闭文件   
+    return 0;   //成功加锁。
+#else
+    //2022-08-09改为msgq通信确认进程是否存在，发送pid过去
+    pid_t pid;
+    int ret = 0;   //参数需要一个指针，返回函数返回值
+    pid = getpid();  //获得自己的pid
+//    printf("API pid = %d\n",pid);
+	// if(assert_init())  //未初始化
+	// 	return -1;
+	//查询是否存在api进程，让服务进程查询
+	if(api_send_and_waitack(eAPI_CHECK_APIRUN_CMD,pid,&ret))  //发送的第二个参数表示pid，参数3用于返回结果，0表示没有启动API，1表示已经存在，-1表示出错
+	{
+		printf("error : isProcessRunning pid = %d\n",pid);
+		return -1;
+	}
+	return ret;
+#endif    
+}
 
 
 //1. 核心板初始化函数
@@ -251,17 +311,14 @@ int drvCoreBoardInit(void)
 {
 	int ret ;
 
-	printf("drvCoreBoardInit running,Buildtime %s\n",g_build_time_str);
+	if(CoreBoardInit == 1)  //已经初始化了
+		return 0;
 
-	if(isProcessRunning())   //防止服务程序被多次运行
-	{
-		printf("isProcessRunning return !0\n");
-		exit(-1);   //结束进程
-	}
+	printf("drvCoreBoardInit running,Buildtime %s\n",g_build_time_str);
 
 	start_server_process();
 	atexit(at_exit_close_file); //注册一个退出函数
-
+	
 	ret = msgq_init();
 	if(ret)  //不为0，表示出错！！
 	{
@@ -270,6 +327,11 @@ int drvCoreBoardInit(void)
 		return ret;
 	}
 	
+	if(isProcessRunning())   //防止程序被多次运行
+	{
+		printf("API:isProcessRunning return !0\n");
+		exit(-1);   //结束进程
+	}
 
 	ret = getKeyboardTypePinInit();  //用于键盘识别的引脚初始化，在本文件中
 	if(ret) //不为0，表示出错！！
@@ -318,23 +380,21 @@ void drvCoreBoardExit()
 
 	msgq_exit();  //清除消息队列中的消息
 	CoreBoardInit = 0;   //未初始化了！！！
+
+	if(lock_fd >= 0)   //文件被打开，则关闭
+	{
+		close(lock_fd);
+		lock_fd = -1;
+	}	
+
+
 	exited = 1;   //已经执行过该函数
 	return;
 }
 
 
 
-//需要单片机通信的，就需要初始化，所以不是所有的api都需要这么做
-static int assert_init(void)
-{	
-	if(CoreBoardInit!=1) //没有初始化
-	{
-		drvCoreBoardInit();  //进行初始化
-		if(CoreBoardInit!=1)  //还是失败？？？
-			return -1;
-	}
-	return 0;
-}
+
 
 
 

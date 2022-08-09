@@ -88,7 +88,9 @@ static int get_event_dev(char *name) {
 
 	CHECK(input_device_fd = fopen(PROC_INPUT_DEVICES, "r"), -1, "Error fopen with %d: %s", errno, strerror(errno));
 	while(getline(&lineptr, &n, input_device_fd) != EOF) {
+	//	printf("APILIB: 1debug lineptr = %s name = %s\n",lineptr,name);
 		if(strstr(lineptr, "Name") && strstr(lineptr, name)) {
+	//		printf("APILIB: 2debug lineptr = %s name = %s\n",lineptr,name);
 			char *strstrp = NULL;
 			while(getline(&lineptr, &n, input_device_fd) != EOF) {
 				if((strstrp = strstr(lineptr, "Handlers"))) {
@@ -106,6 +108,9 @@ static int get_event_dev(char *name) {
 		free(lineptr);
 		lineptr = NULL;
 	}
+
+//	printf("APILIB: input_device_num = %d\n",input_device_num);
+
 	CHECK(!fclose(input_device_fd), -1, "Error fclose with %d: %s", errno, strerror(errno));
 	return input_device_num;
 }

@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-08-08 20:26:07
+* @Last Modified time: 2022-08-09 11:08:21
 */
 
 
@@ -40,7 +40,7 @@
 static const char* g_build_time_str = "Buildtime :"__DATE__" "__TIME__;   //获得编译时间
 //全局变量，数据应该保持实时刷新。
 struct threadpool* pool;  //线程池
-
+static pid_t api_pid = 0;
 //mcu 自己的协议 相当于把协议又翻译一次
 //
 //
@@ -62,20 +62,20 @@ struct threadpool* pool;  //线程池
 // 	send_mcu_data(mcu_cmd_buf);
 // }
 
-static size_t get_executable_path( char* processname, size_t len)
-{
-    char* path_end;
-    char processdir[512] = {0};
-    if(readlink("/proc/self/exe", processdir,sizeof processdir) <=0)
-            return -1;
-    path_end = strrchr(processdir,  '/');
-    if(path_end == NULL)
-            return -1;
-    ++path_end;
-    strncpy(processname, path_end,len);
-    *path_end = '\0';
-    return (size_t)(path_end - processdir);
-}
+// static size_t get_executable_path( char* processname, size_t len)
+// {
+//     char* path_end;
+//     char processdir[512] = {0};
+//     if(readlink("/proc/self/exe", processdir,sizeof processdir) <=0)
+//             return -1;
+//     path_end = strrchr(processdir,  '/');
+//     if(path_end == NULL)
+//             return -1;
+//     ++path_end;
+//     strncpy(processname, path_end,len);
+//     *path_end = '\0';
+//     return (size_t)(path_end - processdir);
+// }
 
 //ps -ef | grep drv_22134_server | grep -v grep | wc -l
 //尝试启动server进程
@@ -83,22 +83,19 @@ static size_t get_executable_path( char* processname, size_t len)
 static int is_server_process_start(void)
 {
 	FILE *ptr = NULL;
-	char cmd[256];
+	char cmd[256] = "ps -ef | grep drv_22134_server | grep -v grep | wc -l";
 	int status = 0;
 	char buf[64];
 	int count;
 
 	char name[64];
 
-	if(get_executable_path( name, sizeof name) > 0)
-	{
-		snprintf(cmd,sizeof cmd,"ps -ef | grep %s | grep -v grep | wc -l",name);
-	}
-	else
-		snprintf(cmd,sizeof cmd,"ps -ef | grep %s | grep -v grep | wc -l","drv_22134_server");
+	// if(get_executable_path( name, sizeof name) > 0)
+	// {
+	// 	snprintf(cmd,sizeof cmd,"ps -ef | grep %s | grep -v grep | wc -l",name);
+	// }
 
-
-	printf("cmd = %s\n",cmd);
+	// printf("server:cmd = %s\n",cmd);
 
 	if((ptr = popen(cmd, "r")) == NULL)
 	{
@@ -108,15 +105,17 @@ static int is_server_process_start(void)
 	memset(buf, 0, sizeof(buf));
 	if((fgets(buf, sizeof(buf),ptr))!= NULL)//获取进程和子进程的总数
 	{
+//		printf("server: buf = %s\n",buf);
 		count = atoi(buf);
 		if(count < 2)//当进程数小于等于2时，说明进程不存在, 1表示有一个，是自己
 		{
 			pclose(ptr);
 			printf("no server process \n");
-			return 0;  //系统中没有该进程
-			// system("/root/drv_22134_server");
-			// printf("api start drv_22134_server \n");
+			return 0;  //系统中没有该进程	
 		}
+		// else
+		// 	system("ps -ef | grep drv_22134_server ");
+
 	}
 	pclose(ptr);
 	return 1;
@@ -150,7 +149,7 @@ static int isProcessRunning()
 //    close(lock_fd);	//不能关闭文件
 #else
 	int ret = is_server_process_start();
-	printf("ret = %d\n",ret);
+//	printf("server: Process is Running ret = %d\n",ret);
 	return ret;   //返回0表示没有该进程，非0则表示有或者出错
     
 #endif    
@@ -159,13 +158,31 @@ static int isProcessRunning()
 
 
 
+static int check_api_running(void)
+{
+	char filename[256] = {0};
 
+	if(api_pid < 1)   //不存在这样的进程
+		return 0;
+
+	snprintf(filename,sizeof filename,"/proc/%d/exe",api_pid);
+	printf("server : check_api_running filename = %s\n",filename);
+
+	if(access(filename,F_OK ) != -1)
+	{
+		printf("server : check_api_running access ok\n");
+		return 1;   //进程已存在
+	}
+	printf("server : check_api_running access 0\n");
+	return 0;  //进程不存在
+}
 
 
 //应答客户的cpi的查询，可以在客户端并发
 //直接回复全局数据
 static void answer_to_api(msgq_t *pmsgbuf)
 {
+	int ret;
 	unsigned char mcu_cmd_buf[2];
 	msgq_t msgbuf;  //用于应答
 		
@@ -223,6 +240,22 @@ static void answer_to_api(msgq_t *pmsgbuf)
 				msgbuf.ret = 1; //表示又数据返回
 				msgbuf.param1 = mcu_cmd_buf[0];
 			}
+			break;
+		case eAPI_CHECK_APIRUN_CMD:
+		//		printf("server : eAPI_CHECK_APIRUN_CMD pid = %d\n",pmsgbuf->param1);
+				ret = check_api_running();  //看看是否存在
+				if(ret == 0)
+				{
+		//			printf("server : eAPI_CHECK_APIRUN_CMD 111\n");
+					api_pid = pmsgbuf->param1; //记录该pid号					
+					msgbuf.param1 = 0;  //表示进程不存在
+				}
+				else
+				{
+		//			printf("server : eAPI_CHECK_APIRUN_CMD 222\n");
+					msgbuf.param1 = 1;  //表示进程存在	
+				}
+				msgbuf.ret = 1; //表示有数据返回	
 			break;
 		default:
 			msgbuf.ret = -1;   //不能是别的命令
@@ -302,7 +335,7 @@ int main(int argc, char *argv[])
 
 	if(isProcessRunning())   //防止服务程序被多次运行
 	{
-		printf("isProcessRunning return !0\n");
+		printf("server : isProcessRunning return !0\n");
 		return 0;
 	}	
 
