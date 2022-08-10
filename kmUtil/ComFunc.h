@@ -49,5 +49,5 @@ int PortSend(int fdcom,unsigned char *data, unsigned char   datalen);
  *	fdcom：串口描述符数组， data：接收缓冲区, datalen：接收长度， chan:接收到数据的通道
  *	返回实际读入的长度
 */
-int PortRecv( int fdcom , char *data, unsigned char   datalen);
+int PortRecv( int fdcom ,unsigned  char *data, unsigned char   datalen);
 #endif

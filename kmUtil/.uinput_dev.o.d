@@ -1,4 +1,4 @@
-uart_to_mcu.o: uart_to_mcu.c /usr/aarch64-linux-gnu/include/stdc-predef.h \
+uinput_dev.o: uinput_dev.c /usr/aarch64-linux-gnu/include/stdc-predef.h \
  /usr/aarch64-linux-gnu/include/errno.h \
  /usr/aarch64-linux-gnu/include/features.h \
  /usr/aarch64-linux-gnu/include/sys/cdefs.h \
@@ -106,16 +106,4 @@ uart_to_mcu.o: uart_to_mcu.c /usr/aarch64-linux-gnu/include/stdc-predef.h \
  /usr/aarch64-linux-gnu/include/bits/types/__locale_t.h \
  /usr/aarch64-linux-gnu/include/strings.h \
  /usr/aarch64-linux-gnu/include/bits/strings_fortified.h \
- /usr/aarch64-linux-gnu/include/bits/string_fortified.h \
- /usr/aarch64-linux-gnu/include/pthread.h \
- /usr/aarch64-linux-gnu/include/sched.h \
- /usr/aarch64-linux-gnu/include/bits/sched.h \
- /usr/aarch64-linux-gnu/include/bits/cpu-set.h \
- /usr/aarch64-linux-gnu/include/time.h \
- /usr/aarch64-linux-gnu/include/bits/time.h \
- /usr/aarch64-linux-gnu/include/bits/types/struct_tm.h \
- /usr/aarch64-linux-gnu/include/bits/types/struct_itimerspec.h \
- /usr/aarch64-linux-gnu/include/bits/setjmp.h \
- /usr/aarch64-linux-gnu/include/semaphore.h \
- /usr/aarch64-linux-gnu/include/bits/semaphore.h ComFunc.h uart_to_mcu.h \
- uinput_dev.h
+ /usr/aarch64-linux-gnu/include/bits/string_fortified.h

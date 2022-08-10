@@ -254,7 +254,7 @@ int PortSend(int fdcom,unsigned char *data, unsigned char datalen)
  * 		>0 表示收到的字节数，正常应该等于datalen（要求的字节数）
  *      其他: 错误.
 ********************************************/
-int PortRecv(int fdcom, char *data, unsigned char  datalen)
+int PortRecv(int fdcom, unsigned char *data, unsigned char  datalen)
 {
 	int ret;
 	unsigned char readlen;

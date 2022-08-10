@@ -54,6 +54,7 @@ obj-y +=  $(foreach dir, $(SUBDIRS), $(dir)/)   #audio-i2c/  keyboard/ kmUtil/  
 
 # 第一个目标 # $(TARGET)
 all : start_recursive_build $(TARGET)
+	@[ -d test ] && make -C test
 	@echo $(TARGET) has been built !
     
 # 处理第一个依赖，**转到 Makefile.build 执行**
@@ -72,11 +73,12 @@ libdrvapi22134.so:drv_22134_api.o linux-gpio-app/built-in.o msgq_app/built-in.o 
 clean:
 	rm -f $(shell find -name "*.o")
 	rm -f $(TARGET)
+	[ -d test ]  && make clean -C test
     
 # 彻底清理
-distclean:
-	rm -f $(shell find -name "*.o")
+distclean:clean
+#	rm -f $(shell find -name "*.o")
 	rm -f $(shell find -name "*.d")
-	rm -f $(TARGET)
+#	rm -f $(TARGET)
 
 
