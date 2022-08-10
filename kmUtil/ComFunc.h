@@ -43,7 +43,7 @@ void PortClose(int fdcom);
  *	fdcom：串口描述符， data：待发送数据， datalen：数据长度
  *	返回实际发送长度
 */
-int PortSend(int fdcom, char *data, unsigned char   datalen);
+int PortSend(int fdcom,unsigned char *data, unsigned char   datalen);
 /*
  *	接收数据
  *	fdcom：串口描述符数组， data：接收缓冲区, datalen：接收长度， chan:接收到数据的通道

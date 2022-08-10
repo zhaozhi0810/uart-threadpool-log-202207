@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-29 10:06:39
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-08-02 15:29:58
+* @Last Modified time: 2022-08-10 10:23:03
 */
 
 #include <stdio.h>
@@ -181,7 +181,7 @@ bool gpio_direction_unset(const int pin)
 			return false;
 		}
 	}
-
+	return true;
 }
 
 /*

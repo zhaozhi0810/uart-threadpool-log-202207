@@ -20,7 +20,6 @@
 
 #define bzero(a, b)             memset(a, 0, b)
 
-
 /*******************************************
  *	波特率转换函数（请确认是否正确）
 ********************************************/
@@ -225,7 +224,7 @@ void PortClose(int fdcom)
  *	fdcom: 串口描述符，data: 待发送数据，datalen: 数据长度
  *	返回实际发送长度
 *********************************************/
-int PortSend(int fdcom, char *data, unsigned char datalen)
+int PortSend(int fdcom,unsigned char *data, unsigned char datalen)
 {
 	int len = 0;
 	int ret;
@@ -263,7 +262,7 @@ int PortRecv(int fdcom, char *data, unsigned char  datalen)
 //	struct timeval tv_timeout;
 //	int fdMax = 0;
 
-	static int bytesNum=0;
+//	static int bytesNum=0;
 	 
 	if ( -1 == fdcom )
 	{

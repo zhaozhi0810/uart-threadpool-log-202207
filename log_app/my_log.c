@@ -66,10 +66,11 @@ static int delete_outdate_file(void)
 	DIR* path = NULL;
 	struct dirent*ptr;
 	struct stat statbuf;
-	char buf[1024];
+//	int ret;
+//	char buf[1024];
 	time_t t;
-	struct tm tim;	
-	char file_name[128] = {LOG_PATH};
+//	struct tm tim;	
+	char file_name[272] = {LOG_PATH};
 	int filename_len = strlen(LOG_PATH);
 
 
@@ -96,7 +97,7 @@ static int delete_outdate_file(void)
 			{
 								
 				//strcpy(file_name+filename_len,ptr->d_name,)	-
-				snprintf(file_name+filename_len,sizeof(file_name)-filename_len,"%s",ptr->d_name);			
+				snprintf(file_name+filename_len,sizeof(file_name)-filename_len,"%s",ptr->d_name);							
 				if(stat(file_name, &statbuf) == 0)  //
 				{
 					if(((t - statbuf.st_mtime) > (DAY10_SECS)))  //如果存在呢，删除文件
@@ -104,15 +105,11 @@ static int delete_outdate_file(void)
 						unlink(file_name);
 					}				
 				}
-
 			}
-		}
-	
+		}	
 	}
-	
-
-
 	closedir(path);
+	return 0;
 }
 
 
@@ -137,7 +134,7 @@ int log_init(void)
 {
 	struct stat statbuf;
 	pthread_t thread;
-	int path_len = 0; 
+//	int path_len = 0; 
 	int pipefd[2];  //创建管道
 	
 	//目录是否存在？
@@ -212,9 +209,9 @@ static void* log_thread(void* arg)
 	FILE* fp_write=NULL;
 	time_t t;
 	struct tm tim;
-	int offset = 0;;
-	int len = 0;
-	int ret;
+//	int offset = 0;;
+//	int len = 0;
+//	int ret;
 
 	int last_year=0,last_month=0,last_day=0;   //保存上次的日期
 	char file_name[128] = {LOG_PATH};
@@ -237,7 +234,9 @@ static void* log_thread(void* arg)
 	while(1)
 	{
 		memset(buf,0,sizeof(buf));//数据清零
-		fgets(buf,sizeof buf,fp);
+		
+		if(fgets(buf,sizeof buf,fp)==NULL) //返回空指针，有问题
+			continue;
 	//	perror("xxxxx");
 		t = time(NULL);  //获得系统时间
 		localtime_r(&t, &tim);

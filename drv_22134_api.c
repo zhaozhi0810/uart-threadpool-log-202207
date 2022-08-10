@@ -223,9 +223,10 @@ static int my_system(char* cmd)
 	}
     else if (fpid == 0) {
        execl(cmd, cmd, NULL);
-    } else {   //父进程
-        return 0;
-    }
+       return -1;
+    } 
+    //else {   //父进程
+    return 0;
 }
 
 
@@ -236,7 +237,7 @@ static int start_server_process(void)
 {
 	FILE *ptr = NULL;
 	char cmd[] = "ps -ef | grep drv_22134_server | grep -v grep | wc -l";
-	int status = 0;
+//	int status = 0;
 	char buf[64];
 	int count;
 
@@ -323,7 +324,7 @@ int drvCoreBoardInit(void)
 	ret = msgq_init();
 	if(ret)  //不为0，表示出错！！
 	{
-		DEBUG_PRINTF("ERROR: msgq_init ret = %d\n",ret);
+		DBG_PRINTF("ERROR: msgq_init ret = %d\n",ret);
 		CoreBoardInit = -1;   //记录初始化失败
 		return ret;
 	}
@@ -337,7 +338,7 @@ int drvCoreBoardInit(void)
 	ret = getKeyboardTypePinInit();  //用于键盘识别的引脚初始化，在本文件中
 	if(ret) //不为0，表示出错！！
 	{
-		DEBUG_PRINTF("ERROR: getKeyboardTypePinInit ret = %d\n",ret);
+		DBG_PRINTF("ERROR: getKeyboardTypePinInit ret = %d\n",ret);
 		CoreBoardInit = -1;   //记录初始化失败
 		return ret;
 	}
@@ -345,7 +346,7 @@ int drvCoreBoardInit(void)
 	ret = i2c_adapter_init(I2C_ADAPTER_DEVICE, I2C_DEVICE_ADDR);
 	if(ret) //不为0，表示出错！！
 	{
-		DEBUG_PRINTF("ERROR: i2c_adapter_init ret = %d\n",ret);
+		DBG_PRINTF("ERROR: i2c_adapter_init ret = %d\n",ret);
 		CoreBoardInit = -1;   //记录初始化失败
 		return ret;
 	}
@@ -354,7 +355,7 @@ int drvCoreBoardInit(void)
 	ret = keyboard_init();  //按键事件处理线程初始化 
 	if(ret) //不为0，表示出错！！
 	{
-		DEBUG_PRINTF("ERROR: keyboard_init ret = %d\n",ret);
+		DBG_PRINTF("ERROR: keyboard_init ret = %d\n",ret);
 		CoreBoardInit = -1;   //记录初始化失败
 		return ret;
 	}
@@ -650,7 +651,7 @@ static  int parse_cputemp(int *temp)
 //21. 获取CPU温度
 float drvGetCPUTemp(void)
 {
-	int tmp;
+	int tmp = 0;
 	int ret; 
 
 	ret = parse_cputemp(&tmp);
@@ -659,7 +660,7 @@ float drvGetCPUTemp(void)
 		return (float)tmp;   //函数只读到整数部分，返回时转为浮点数
 	}
 
-	DEBUG_PRINTF("ERROR: ret = %d\n",ret);
+	DBG_PRINTF("ERROR: ret = %d\n",ret);
 	return 0.0;
 }
 

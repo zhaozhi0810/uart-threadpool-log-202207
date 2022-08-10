@@ -242,7 +242,9 @@ static unsigned int verify_data(unsigned char *data,unsigned char len)
 {
 	unsigned char check;
 	unsigned int ret = -1;
+#ifdef PRINT_DEBUG
 	int i;
+#endif	
 	if(data == NULL)
 		return -1;
 #ifdef PRINT_DEBUG	
@@ -352,7 +354,7 @@ static void* info_recv_proc_func(void)
 			ProcRecvKeyCmd();
 		}	
 	}//while(1)
-
+	return NULL;
 }
 
 
@@ -465,7 +467,7 @@ sure that you have inserted the uinput.ko into kernel. */
 int uart_init(int argc, char *argv[]) 
 {
 	int nonblock=0;
-	int i=0;
+//	int i=0;
 	char* com_port = "/dev/ttyS0";
 
 	int c;

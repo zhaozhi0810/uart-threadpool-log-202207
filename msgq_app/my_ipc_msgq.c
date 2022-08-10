@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 09:57:14
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-08-02 15:33:34
+* @Last Modified time: 2022-08-10 10:38:28
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,7 +92,7 @@ int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
 {
 	int recv_flg = 0;	
 	int ret;
-	int retry = 0;
+//	int retry = 0;
 
 	if(msgid == -1) //未初始化
 	{
@@ -148,7 +148,7 @@ int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
 int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
 {
 	int ret = -EBUSY;  //初始值
-	int cmd = msgbuf->cmd;
+//	int cmd = msgbuf->cmd;
 
 	if(msgid == -1) //未初始化
 	{
@@ -184,8 +184,8 @@ int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
 //发送应答消息消息，不等待应答。
 int msgq_send_ack(msgq_t *msgbuf)
 {
-	int ret;
-	int cmd = msgbuf->cmd;
+//	int ret;
+//	int cmd = msgbuf->cmd;
 
 	if(msgid == -1) //未初始化
 	{

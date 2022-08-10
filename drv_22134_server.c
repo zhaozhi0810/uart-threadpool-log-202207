@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-08-09 11:08:21
+* @Last Modified time: 2022-08-10 10:37:04
 */
 
 
@@ -84,11 +84,11 @@ static int is_server_process_start(void)
 {
 	FILE *ptr = NULL;
 	char cmd[256] = "ps -ef | grep drv_22134_server | grep -v grep | wc -l";
-	int status = 0;
+//	int status = 0;
 	char buf[64];
 	int count;
 
-	char name[64];
+//	char name[64];
 
 	// if(get_executable_path( name, sizeof name) > 0)
 	// {
@@ -318,6 +318,7 @@ static void* msg_connect(void * data)
 			free(pmsgbuf);   //出错的情况下由自己释放
 		}	
 	}
+	return NULL;
 }
 
 
