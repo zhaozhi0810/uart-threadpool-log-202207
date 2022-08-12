@@ -33,10 +33,20 @@ typedef enum
 	eMCU_KEY_CHANGE_TYPE,    //按键被修改上报
     eMCU_LEDSETALL_TYPE,     //对所有led进行控制，点亮或者熄灭
 	eMCU_LEDSETPWM_TYPE,     //设置所有led的亮度 
-	eMCU_GET_TEMP_TYPE      //获得单片机内部温度
+	eMCU_GET_TEMP_TYPE,      //获得单片机内部温度	
+	eMCU_HWTD_SETONOFF_TYPE,   //开门狗设置开关
+	eMCU_HWTD_FEED_TYPE,       //看门狗喂狗
+	eMCU_HWTD_SETTIMEOUT_TYPE,    //设置看门狗喂狗时间
+	eMCU_HWTD_GETTIMEOUT_TYPE,    //获取看门狗喂狗时间
+	eMCU_RESET_COREBOARD_TYPE,  //复位核心板
+	eMCU_RESET_LCD_TYPE,        //复位lcd 9211（复位引脚没有连通）
+	eMCU_RESET_LFBOARD_TYPE//,    //复位底板，好像没有这个功能！！！
 }mcu_data_type;
 
+/*
+	注意要 处理com_message_handle(uart_to_mcu.c) 的接收部分，不然会导致应答超时
 
+ */
 
 
 
@@ -61,4 +71,9 @@ void* mcu_recvSerial_thread(void* arg);
  * 	0表示成功，其他表示失败
  * */
 int send_mcu_data(const void* data);  //只需要两个字节的数据就行
+
+
+//程序退出时，串口部分的处理
+void uart_exit(void) ;
+
 #endif

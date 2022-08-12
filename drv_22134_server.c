@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-08-10 10:37:04
+* @Last Modified time: 2022-08-12 09:03:20
 */
 
 
@@ -212,7 +212,16 @@ static void answer_to_api(msgq_t *pmsgbuf)
 			mcu_cmd_buf[1] = pmsgbuf->param2;   //打开1或者关闭0
 			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
 			break;
-
+		case eAPI_HWTD_SETONOFF_CMD:  //硬件看门狗的使能与禁止							
+			mcu_cmd_buf[0] = eMCU_HWTD_SETONOFF_TYPE;  //设置硬件看门狗打开或者关闭			
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //打开1或者关闭0
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			break;	
+		case eAPI_HWTD_FEED_CMD:      //喂狗	
+			mcu_cmd_buf[0] = eMCU_HWTD_FEED_TYPE;  //喂狗			
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //无所谓0或者1
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			break;	
 		case eAPI_LEDSETALL_CMD:      //设置所有的led	
 			mcu_cmd_buf[0] = eMCU_LEDSETALL_TYPE;  //设置所有的led 打开或者关闭			
 			mcu_cmd_buf[1] = pmsgbuf->param2;   //打开1或者关闭0
@@ -241,7 +250,7 @@ static void answer_to_api(msgq_t *pmsgbuf)
 				msgbuf.param1 = mcu_cmd_buf[0];
 			}
 			break;
-		case eAPI_CHECK_APIRUN_CMD:
+		case eAPI_CHECK_APIRUN_CMD: //判断API库是否已经在运行，防止API库被多个进程使用
 		//		printf("server : eAPI_CHECK_APIRUN_CMD pid = %d\n",pmsgbuf->param1);
 				ret = check_api_running();  //看看是否存在
 				if(ret == 0)
@@ -257,6 +266,33 @@ static void answer_to_api(msgq_t *pmsgbuf)
 				}
 				msgbuf.ret = 1; //表示有数据返回	
 			break;
+		case eAPI_HWTD_SETTIMEOUT_CMD:    //设置看门狗喂狗时间
+			mcu_cmd_buf[0] = eMCU_HWTD_SETTIMEOUT_TYPE;  //设置所有的led pwm			
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //喂狗时间 1-250
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			break;
+		case eAPI_HWTD_GETTIMEOUT_CMD:    //获取看门狗喂狗时间
+			mcu_cmd_buf[0] = eMCU_HWTD_GETTIMEOUT_TYPE;  //led 获取单片机内部温度				
+		//	mcu_cmd_buf[1] = pmsgbuf->param1;   //无意义
+			if(0 == send_mcu_data(mcu_cmd_buf))  //返回值为0，表示收到了数据
+			{//获得mcu的数据？？
+				msgbuf.ret = 1; //表示又数据返回
+				msgbuf.param1 = mcu_cmd_buf[0];
+			}
+		break;
+		case eAPI_RESET_COREBOARD_CMD:  //复位核心板
+			mcu_cmd_buf[0] = eMCU_RESET_COREBOARD_TYPE;  //设置所有的led pwm			
+		//	mcu_cmd_buf[1] = pmsgbuf->param1;   //无意义
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			break;
+		case eAPI_RESET_LCD_CMD:        //复位lcd 9211（复位引脚没有连通）
+			mcu_cmd_buf[0] = eMCU_RESET_LCD_TYPE;  //设置所有的led pwm			
+		//	mcu_cmd_buf[1] = pmsgbuf->param1;   //无意义
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			break;
+		case eAPI_RESET_LFBOARD_CMD: //,    //复位底板，好像没有这个功能！！！	
+			//nothing to do
+		break;
 		default:
 			msgbuf.ret = -1;   //不能是别的命令
 		break;

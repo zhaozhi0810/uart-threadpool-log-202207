@@ -35,7 +35,14 @@ enum API_CMD_types{
 	eAPI_LCDONOFF_CMD,       //lcd开启关闭事件
 	eAPI_LEDSETPWM_CMD,      //led设置亮度
 	eAPI_BOART_TEMP_GET_CMD,  //获得单片机的温度
-	eAPI_CHECK_APIRUN_CMD  //获得单片机的温度
+	eAPI_CHECK_APIRUN_CMD,  //获得单片机的温度
+	eAPI_HWTD_SETONOFF_CMD,   //开门狗设置开关
+	eAPI_HWTD_FEED_CMD ,      //看门狗喂狗
+	eAPI_HWTD_SETTIMEOUT_CMD,    //设置看门狗喂狗时间
+	eAPI_HWTD_GETTIMEOUT_CMD,    //获取看门狗喂狗时间
+	eAPI_RESET_COREBOARD_CMD,  //复位核心板
+	eAPI_RESET_LCD_CMD,        //复位lcd 9211（复位引脚没有连通）
+	eAPI_RESET_LFBOARD_CMD//,    //复位底板，好像没有这个功能！！！
 };
 
 

@@ -32,18 +32,18 @@
 //static QUEUE mouseCmdQueue;
 
 
-static 	int p_opt = 0;   //ÊÇ·ñÒª´òÓ¡³ö½ÓÊÕµ½µÄ×Ö·û£¿
+static 	int p_opt = 0;   //打印调试信息，默认不打印
 static 	int uart_fd;
 
-static volatile	unsigned short uart_recv_flag = 0;   //´®¿Ú½ÓÊÕ±êÖ¾£¬ÓÃÓÚµ¥Æ¬»úµÄÓ¦´ð£¬¸ß8Î»±íÊ¾×´Ì¬£¬µÍ8Î»±íÊ¾ÃüÁî
+static volatile	unsigned short uart_recv_flag = 0;   //串口收到单片机数据
 
 
 //#define FRAME_LENGHT (sizeof(com_frame_t)+1)    //Êý¾ÝÖ¡µÄ×Ö½ÚÊý
-#define FRAME_HEAD 0xa5   //×¢ÒâÓëµ¥Æ¬»ú±£³ÖÒ»ÖÂ
+//#define FRAME_HEAD 0xa5   //×¢ÒâÓëµ¥Æ¬»ú±£³ÖÒ»ÖÂ
 
 
 
-#define COM_DATLEN 4 //´®¿ÚµÄÊý¾Ý³¤¶ÈÎª4¸ö×Ö½Ú 0x5f + dat1 + dat2 + checksum
+#define COM_DATLEN 4 //串口数据帧长度 0x5f + dat1 + dat2 + checksum
 #define FRAME_HEAD 0xa5
 //static unsigned char com_recv_data[COM_DATLEN*2];   //½ÓÊÕ»º´æ
 
@@ -81,7 +81,14 @@ static void com_message_handle(unsigned char* com_recv_data)
 			case eMCU_LEDSETALL_TYPE:  //ÉèÖÃËùÓÐµÄled ´ò¿ª»òÕß¹Ø±Õ			
 			case eMCU_LEDSETPWM_TYPE:  //设置led的亮度
 			case eMCU_GET_TEMP_TYPE:   //获得单片机的内部温度
-			case eMCU_LED_STATUS_TYPE:		  //获得某个led的状态			
+			case eMCU_LED_STATUS_TYPE:		  //获得某个led的状态	
+			case eMCU_HWTD_SETONOFF_TYPE:   //看门狗开启和关闭
+			case eMCU_HWTD_FEED_TYPE:		//喂狗
+			case eMCU_HWTD_SETTIMEOUT_TYPE:    //设置看门狗喂狗时间
+			case eMCU_HWTD_GETTIMEOUT_TYPE:    //获取看门狗喂狗时间
+			case eMCU_RESET_COREBOARD_TYPE:  //复位核心板
+			case eMCU_RESET_LCD_TYPE:        //复位lcd 9211（复位引脚没有连通）
+			case eMCU_RESET_LFBOARD_TYPE://,    //复位底板，好像没有这个功能！！！
 				uart_recv_flag = com_recv_data[1] | (com_recv_data[2] <<8);  //¸ß8Î»±íÊ¾×´Ì¬		
 				break;
 			default:
@@ -452,23 +459,16 @@ int uart_init(int argc, char *argv[])
 		exit(1);
 	}
 
-	return PortSet(uart_fd,baudrate,1,'N');
-
-	//Ñ­»·´¦Àí½ÓÊÕµÄÊý¾Ý
-    // info_recv_proc_func(uart_fd,p_opt);	//p_opt Îª´òÓ¡Ñ¡Ïî£¬1±íÊ¾½ÓÊÕµÄÊý¾Ý½«´òÓ¡³öÀ´
-
-
-    //³ÌÐòÍË³öµÄ´¦Àí
-	/* Close the UINPUT device */
-	// ioctl(uinp_fd, UI_DEV_DESTROY);
-	// close(uinp_fd);       
- //    close(uart_fd);
-	
+	return PortSet(uart_fd,baudrate,1,'N');    //设置波特率等	
 }
 
 
-
-
+//程序退出时，串口部分的处理
+void uart_exit(void) 
+{
+	uinput_device_close();
+	close(uart_fd);
+}
 
 
 

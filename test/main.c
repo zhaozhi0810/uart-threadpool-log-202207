@@ -75,7 +75,9 @@ enum {
 	TEST_ITEM_GET_HEADSET_INSERT_STATUS,
 	TEST_ITEM_GET_HANDLE_INSERT_STATUS,
 	TEST_ITEM_SET_TUNE_UP,
-	TEST_ITEM_SET_TUNE_DOWN
+	TEST_ITEM_SET_TUNE_DOWN,
+	TEST_ITEM_SET_HWTD_TIMEOUT,   //设置硬件看门狗超时时间
+	TEST_ITEM_GET_HWTD_TIMEOUT   //,  //获得硬件看门狗超时时间
 };
 
 //extern int drvCoreBoardExit(void);
@@ -130,6 +132,8 @@ static void s_show_usage(void) {
 	printf("\t%2d - Get handle insert status\n", TEST_ITEM_GET_HANDLE_INSERT_STATUS);
 	printf("\t%2d - Set tune up\n", TEST_ITEM_SET_TUNE_UP);
 	printf("\t%2d - Set tune Down\n", TEST_ITEM_SET_TUNE_DOWN);
+	printf("\t%2d - Set Hard watchdog timerout\n", TEST_ITEM_SET_HWTD_TIMEOUT);
+	printf("\t%2d - Get Hard watchdog timerout\n", TEST_ITEM_GET_HWTD_TIMEOUT);
 	printf("\tOther - Exit\n");
 }
 
@@ -189,6 +193,12 @@ int main(int args, char *argv[]) {
 	drvSetGpioCbk(s_gpio_notify_func);
 	drvSetGpioKeyCbk(s_panel_key_notify_func);
 
+
+	//首先要设置看门狗超时时间（220）--> 22秒
+	if(drvWatchdogSetTimeout(220) == EXIT_FAILURE) {
+		ERR("Error drvWatchdogSetTimeout!");
+	}
+
 	if(drvWatchDogEnable()) {
 		ERR("Error drvWatchDogEnable!");
 		drvCoreBoardExit();
@@ -217,6 +227,8 @@ int main(int args, char *argv[]) {
 				INFO("Watchdog is running!");
 				break;
 			}
+
+
 			if(drvWatchDogEnable() == EXIT_FAILURE) {
 				ERR("Error drvWatchDogEnable!");
 				break;
@@ -483,7 +495,30 @@ int main(int args, char *argv[]) {
 		case TEST_ITEM_SET_TUNE_DOWN:  //音量减小
 			drvSetTuneDown();
 		break;
+		case TEST_ITEM_SET_HWTD_TIMEOUT:  //设置硬件看门狗超时时间
+		{
 
+			int timeout = 0;
+			INFO("Please input TIMEOUT[1-250]:");
+			if(scanf("%d", &timeout) != 1) {
+				ERR("Error scanf with %d: %s\n", errno, strerror(errno));
+				continue;
+			}
+			//对取值进行合法设置
+			if(timeout < 1)
+				timeout = 1;
+			else if(timeout > 250)
+				timeout = 250;
+			INFO("Set hard watchdog timeout = %d!\n", timeout);
+			drvWatchdogSetTimeout(timeout);
+			break;
+		}
+		case TEST_ITEM_GET_HWTD_TIMEOUT:  //获取硬件看门狗超时时间
+		{
+			int timeout = drvWatchdogGetTimeout();
+			INFO("Get hard watchdog timeout = %d!\n", timeout);
+			break;	
+		}
 		default:
 			s_main_thread_exit = true;
 			printf("%s exit,Buildtime %s\n",argv[0],g_build_time_str);

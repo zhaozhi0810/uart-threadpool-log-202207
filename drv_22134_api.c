@@ -406,8 +406,15 @@ void drvCoreBoardExit(void)
 //1：设置失败
 int drvWatchDogEnable(void)
 {
-	MY_PRINTF("nothing todo 2022-07-27\n");
-	//nothing todo 2022-07-27
+	int param = 1;
+	if(assert_init())  //未初始化
+		return -1;
+
+	if(api_send_and_waitack(eAPI_HWTD_SETONOFF_CMD,param,&param))  //发送的第2个参数1 表示使能
+	{
+		printf("error : drvWatchDogEnable\n");
+		return 1;
+	}
 	return 0;
 }
 
@@ -417,32 +424,71 @@ int drvWatchDogEnable(void)
 //1：设置失败
 int drvWatchDogDisable(void)
 {
-	MY_PRINTF("nothing todo 2022-07-27\n");
-	//nothing todo 2022-07-27
+	int param = 0;
+	if(assert_init())  //未初始化
+		return -1;
+
+	if(api_send_and_waitack(eAPI_HWTD_SETONOFF_CMD,param,&param))  //发送的第2个参数0 表示禁止
+	{
+		printf("error : drvWatchDogEnable\n");
+		return 1;
+	}
+
 	return 0;
 }
 
 //4. 喂狗函数
 void drvWatchDogFeeding(void)
 {
-	MY_PRINTF("nothing todo 2022-07-27\n");
-	//nothing todo 2022-07-27
+	int param = 0;
+	if(assert_init())  //未初始化
+		return;
+
+	if(api_send_and_waitack(eAPI_HWTD_FEED_CMD,param,&param))  //发送的第2，3个参数无意义
+	{
+		printf("error : drvWatchDogFeeding\n");
+		return;
+	}
 }
 
 //5. 设置看门狗超时时间
+//（参数timeout 只支持1-250，表示100ms-25S的范围）
 int drvWatchdogSetTimeout(int timeout)
 {
-	MY_PRINTF("nothing todo 2022-07-27\n");
-	//nothing todo 2022-07-27
+	int param = 0;
+	if(assert_init())  //未初始化
+		return -1;
+
+	if(timeout < 1)
+		timeout = 1;
+	else if(timeout > 250)
+		timeout = 250;
+
+
+	if(api_send_and_waitack(eAPI_HWTD_SETTIMEOUT_CMD,timeout,&param))  //发送的第2，3个参数无意义
+	{
+		printf("error : drvWatchDogFeeding\n");
+		return -1;
+	}
 	return 0;
 }
 
 //6. 获取看门狗超时时间
+//返回值 1-250表示合法，表示超时时间为100ms-25s
 int drvWatchdogGetTimeout(void)
 {
-	MY_PRINTF("nothing todo 2022-07-27\n");
-	//nothing todo 2022-07-27
-	return 0;
+	int param = 0;   //参数需要一个指针，返回函数返回值
+	if(assert_init())  //未初始化
+		return 0;
+//	MY_PRINTF("nothing todo 2022-07-27\n");
+	if(api_send_and_waitack(eAPI_HWTD_GETTIMEOUT_CMD,0,&param))  //发送的第二个参数无意义，第三个用于返回值
+	{
+		printf("error : drvGetBoardTemp \n");
+		return 0;
+	}
+	printf("drvWatchdogGetTimeout Timeout（1-250） = %d\n",param);
+	return param;   //返回的温度只有整数部分！！
+//	return 0;
 }
 
 //7. 禁止扬声器放音  //3399的AD7管脚置0  //接口板上J45的5脚 ,通道2的左声道
@@ -914,11 +960,18 @@ float drvGetCurrent(void)
 	return 0.0;
 }
 
-//38. Lcd屏重置
+//38. Lcd屏重置，返回0表示正确
 int drvLcdReset(void)
 {
-	MY_PRINTF("nothing todo 2022-07-27\n");
-	//nothing todo 2022-07-27
+	int param = 1;
+	if(assert_init())  //未初始化
+		return -1;
+
+	if(api_send_and_waitack(eAPI_RESET_LCD_CMD,1,&param))  //发送的第二个参数无意义，第三个无意义
+	{
+		printf("error : drvLcdReset \n");
+		return -1;
+	}
 	return 0;
 }
 
@@ -927,14 +980,31 @@ int drvIfBrdReset(void)
 {
 	MY_PRINTF("nothing todo 2022-07-27\n");
 	//nothing todo 2022-07-27	
+	// int param = 1;
+	// if(assert_init())  //未初始化
+	// 	return -1;
+
+	// if(api_send_and_waitack(eAPI_RESET_LFBOARD_CMD,1,&param))  //发送的第二个参数无意义，第三个无意义
+	// {
+	// 	printf("error : drvLightAllLED \n");
+	// 	return -1;
+	// }
+
 	return 0;
 }
 
-//40.核心板重置
+//40.核心板重置，返回0表示正确
 int drvCoreBrdReset(void)
 {
-	MY_PRINTF("nothing todo 2022-07-27\n");
-	//nothing todo 2022-07-27	
+	int param = 1;
+	if(assert_init())  //未初始化
+		return -1;
+
+	if(api_send_and_waitack(eAPI_RESET_COREBOARD_CMD,1,&param))  //发送的第二个参数无意义，第三个无意义
+	{
+		printf("error : drvCoreBrdReset \n");
+		return -1;
+	}
 	return 0;
 }
 
