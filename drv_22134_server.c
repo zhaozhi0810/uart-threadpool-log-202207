@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-08-12 09:03:20
+* @Last Modified time: 2022-08-16 09:20:15
 */
 
 
@@ -30,7 +30,7 @@
 
 #include "my_log.h"
 #include "my_ipc_msgq.h"
-#include "kmUtil/uart_to_mcu.h"
+#include "uart_to_mcu.h"
 #include "threadpool.h"
 //服务端，包含串口通信，msgq通信，线程池，日志等。
 
@@ -293,6 +293,13 @@ static void answer_to_api(msgq_t *pmsgbuf)
 		case eAPI_RESET_LFBOARD_CMD: //,    //复位底板，好像没有这个功能！！！	
 			//nothing to do
 		break;
+
+		case eAPI_MICCTRL_SETONOFF_CMD:  //控制底板mic_ctrl引脚的电平
+			mcu_cmd_buf[0] = eMCU_MICCTRL_SETONOFF_TYPE;  //设置所有的led pwm			
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //无意义
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+		break;
+
 		default:
 			msgbuf.ret = -1;   //不能是别的命令
 		break;
@@ -356,6 +363,11 @@ static void* msg_connect(void * data)
 	}
 	return NULL;
 }
+
+
+
+
+
 
 
 

@@ -29,11 +29,12 @@
 #include "i2c_reg_rw.h"
 #include "drv_22134_server.h"
 #include "keyboard.h"
+//#include "drv_gpio_input_event.h"   //ptt事件的处理
 /*
 	与串口通信部分，使用msgq的方式，发送id为678，接收id为234
 
  */
-#define TYPE_API_SENDTO_SERVER 678   //发
+#define TYPE_API_SENDTO_SERVER 678   //发 改到msgq.c中去了
 #define TYPE_API_RECFROM_SERVER 234
 
 
@@ -115,7 +116,7 @@ static int assert_init(void)
 
 //api发送数据给服务器，并且等待服务器应答，超时时间1s
 //第二个参数可以用于返回数据，无数据时可以为NULL
-static int api_send_and_waitack(int cmd,int param1,int *param2)
+int api_send_and_waitack(int cmd,int param1,int *param2)
 {
 	msgq_t msgbuf;  //用于应答
 	int ret;	
@@ -143,6 +144,7 @@ static int api_send_and_waitack(int cmd,int param1,int *param2)
 
 	return 0;	
 }
+
 
 static int __setlcdbrt(int nBrtVal)
 {
@@ -621,6 +623,11 @@ void drvDisableTouchModule(void)
  */
 int drvGetLCDType(void)
 {
+	if(getKeyboardType() == 6)  //2022-08-15 确认只有多功能屏是7寸，其他都是5寸
+	{
+		return 1;
+	}
+
 	return 3;   //5寸屏
 //	return 0;
 }
@@ -927,7 +934,7 @@ int drvGetHMicStatus(void)
 //34. PTT及耳机插入等事件上报回调
 void drvSetGpioCbk(GPIO_NOTIFY_FUNC cbk)
 {
-
+	__drvSetGpioCbk(cbk);
 }
 
 
@@ -938,6 +945,7 @@ void drvSetGpioCbk(GPIO_NOTIFY_FUNC cbk)
 //35. 面板按键事件上报回调
 void drvSetGpioKeyCbk(GPIO_NOTIFY_KEY_FUNC cbk)
 {
+//	printf("drvSetGpioKeyCbk\n");
 	__drvSetGpioKeyCbk(cbk);  //keyboard.c 中给变量赋值
 //	static GPIO_NOTIFY_KEY_FUNC s_cbk;
 //	cbk = cbk;
@@ -1265,7 +1273,23 @@ void drvShowVersion(void)
 
 
 
+//发送单片机命令，PTT引脚已改变
+//status 非0表示按下，0表示松开
+//单片机控制的mic——ctl引脚跟ptt引脚的电平取反
+void api_handptt_change(int status)
+{
+	// int param = status;
+	// if(assert_init())  //未初始化
+	// 	return;
 
+//	printf("api_handptt_change\n");
+
+	if(api_send_and_waitack(eAPI_MICCTRL_SETONOFF_CMD,status,NULL))  //发送的第二个参数ptt当前状态，第三个参数无意义
+	{
+		printf("error : api_handptt_change ,status = %d\n",status);
+	}
+
+}
 
 
 
