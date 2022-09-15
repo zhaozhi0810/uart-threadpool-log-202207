@@ -22,7 +22,7 @@
 #define PANEL_KEY_BRIGHTNESS_MAX	(100)
 
 #define KEY_VALUE_MIN				(0x1)
-#define KEY_VALUE_MAX				(0x27)
+#define KEY_VALUE_MAX				(45)
 
 #define WATCHDOG_TIMEOUT			(20)	// s
 
@@ -56,7 +56,8 @@ enum {
 	TEST_ITEM_GET_INTERFACE_BOARD_TEMPERATURE,
 	TEST_ITEM_SET_KEYBOARD_LED_BRIGHTNESS,
 	TEST_ITEM_GET_KEYBOARD_LED_ON_OFF,
-	TEST_ITEM_SET_KEYBOARD_LED_ON_OFF,
+	TEST_ITEM_SET_KEYBOARD_LED_ON,    //设置led开
+	TEST_ITEM_SET_KEYBOARD_LED_OFF,    //设置led关
 	TEST_ITEM_SET_SCREEN_BRIGHTNESS,
 	TEST_ITEM_RESET_KEYBOARD,
 	TEST_ITEM_RESET_SCREEN,
@@ -77,7 +78,8 @@ enum {
 	TEST_ITEM_SET_TUNE_UP,
 	TEST_ITEM_SET_TUNE_DOWN,
 	TEST_ITEM_SET_HWTD_TIMEOUT,   //设置硬件看门狗超时时间
-	TEST_ITEM_GET_HWTD_TIMEOUT   //,  //获得硬件看门狗超时时间
+	TEST_ITEM_GET_HWTD_TIMEOUT,   //,  //获得硬件看门狗超时时间
+	TEST_PRINT_VERSION            //打印版本，保持为最后一项
 };
 
 //extern int drvCoreBoardExit(void);
@@ -112,7 +114,8 @@ static void s_show_usage(void) {
 	printf("\t%2d - Get interface board temperature\n", TEST_ITEM_GET_INTERFACE_BOARD_TEMPERATURE);
 	printf("\t%2d - Set keyboard led brightness\n", TEST_ITEM_SET_KEYBOARD_LED_BRIGHTNESS);
 	printf("\t%2d - Get keyboard led on/off status\n", TEST_ITEM_GET_KEYBOARD_LED_ON_OFF);
-	printf("\t%2d - Set keyboard led on/off status\n", TEST_ITEM_SET_KEYBOARD_LED_ON_OFF);
+	printf("\t%2d - Set a keyboard led on status\n", TEST_ITEM_SET_KEYBOARD_LED_ON);
+	printf("\t%2d - Set a keyboard led off status\n", TEST_ITEM_SET_KEYBOARD_LED_OFF);
 	printf("\t%2d - Set screen brightness\n", TEST_ITEM_SET_SCREEN_BRIGHTNESS);
 	printf("\t%2d - Reset keyboard\n", TEST_ITEM_RESET_KEYBOARD);
 	printf("\t%2d - Reset screen\n", TEST_ITEM_RESET_SCREEN);
@@ -134,6 +137,7 @@ static void s_show_usage(void) {
 	printf("\t%2d - Set tune Down\n", TEST_ITEM_SET_TUNE_DOWN);
 	printf("\t%2d - Set Hard watchdog timerout\n", TEST_ITEM_SET_HWTD_TIMEOUT);
 	printf("\t%2d - Get Hard watchdog timerout\n", TEST_ITEM_GET_HWTD_TIMEOUT);
+	printf("\t%2d - Print program build time\n", TEST_PRINT_VERSION);  //版本打印，保持为最后一项
 	printf("\tOther - Exit\n");
 }
 
@@ -365,17 +369,49 @@ int main(int args, char *argv[]) {
 			}
 			break;
 		}
-		case TEST_ITEM_SET_KEYBOARD_LED_ON_OFF: {
-			int i = 0;
-			drvSetLedBrt(PANEL_KEY_BRIGHTNESS_MAX);
-			for(; i < 3; i ++) {
-				drvDimAllLED();
-				INFO("All key LED is lighting-off!");
-				drvLightAllLED();
-				INFO("All key LED is lighting-on!");
+		// case TEST_ITEM_SET_KEYBOARD_LED_ON_OFF: {
+		// 	int i = 0;
+		// 	drvSetLedBrt(PANEL_KEY_BRIGHTNESS_MAX);
+		// 	for(; i < 3; i ++) {
+		// 		drvDimAllLED();
+		// 		INFO("All key LED is lighting-off!");
+		// 		drvLightAllLED();
+		// 		INFO("All key LED is lighting-on!");
+		// 	}
+		// 	break;
+		// }
+		// 
+		case TEST_ITEM_SET_KEYBOARD_LED_ON:
+		{
+			int KeyIndex = 0;
+			INFO("Please input KeyIndex: (%u-%u)", KEY_VALUE_MIN, KEY_VALUE_MAX);
+			if(scanf("%d", &KeyIndex) != 1) {
+				ERR("Error scanf with %d: %s", errno, strerror(errno));
+				continue;
 			}
+			if(KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX){
+				ERR("Error KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX");
+				continue;
+			}			
+			drvLightLED(KeyIndex);
+			break;
+		}		
+		case TEST_ITEM_SET_KEYBOARD_LED_OFF:
+		{
+			int KeyIndex = 0;
+			INFO("Please input KeyIndex: (%u-%u)", KEY_VALUE_MIN, KEY_VALUE_MAX);
+			if(scanf("%d", &KeyIndex) != 1) {
+				ERR("Error scanf with %d: %s", errno, strerror(errno));
+				continue;
+			}
+			if(KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX){
+				ERR("Error KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX");
+				continue;
+			}
+			drvDimLED(KeyIndex); 			
 			break;
 		}
+		// 
 		case TEST_ITEM_SET_SCREEN_BRIGHTNESS: {
 			int nBrtVal = 0;
 			INFO("Please input brightness: (%u-%u)\n", SCREEN_BRIGHTNESS_MIN, SCREEN_BRIGHTNESS_MAX);
@@ -519,6 +555,11 @@ int main(int args, char *argv[]) {
 			INFO("Get hard watchdog timeout = %d!\n", timeout);
 			break;	
 		}
+		case TEST_PRINT_VERSION:
+			printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
+			drvShowVersion();
+		break;
+
 		default:
 			s_main_thread_exit = true;
 			printf("%s exit,Buildtime %s\n",argv[0],g_build_time_str);

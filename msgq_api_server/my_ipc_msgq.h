@@ -30,12 +30,12 @@ enum API_CMD_types{
 	eAPI_LEDGET_CMD,         //获取led状态
 	eAPI_LEDSETALL_CMD,      //设置所有的led
 	eAPI_LEDGETALL_CMD,      //获取所有的led
-	eAPI_BTNGET_CMD,         //获取按键
-	eAPI_BTNEVENT_CMD,       //等待按键事件
+	eAPI_BTNGET_CMD,         //获取按键（没有使用）
+	eAPI_BTNEVENT_CMD,       //等待按键事件（没有使用）
 	eAPI_LCDONOFF_CMD,       //lcd开启关闭事件
 	eAPI_LEDSETPWM_CMD,      //led设置亮度
 	eAPI_BOART_TEMP_GET_CMD,  //获得单片机的温度
-	eAPI_CHECK_APIRUN_CMD,  //获得单片机的温度
+	eAPI_CHECK_APIRUN_CMD,  //检测api是否已经运行
 	eAPI_HWTD_SETONOFF_CMD,   //开门狗设置开关
 	eAPI_HWTD_FEED_CMD ,      //看门狗喂狗
 	eAPI_HWTD_SETTIMEOUT_CMD,    //设置看门狗喂狗时间
@@ -79,9 +79,6 @@ int msgq_send(long ack_types,msgq_t *msgbuf,int timeout);
 int msgq_send_ack(msgq_t *msgbuf);
 
 
-//api发送数据给服务器，并且等待服务器应答，超时时间1s
-//第二个参数可以用于返回数据，无数据时可以为NULL
-//int api_send_and_waitack(int cmd,int param1,int *param2);
 
 #endif
 

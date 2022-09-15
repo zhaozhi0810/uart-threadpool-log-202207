@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 09:57:14
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-08-16 09:24:36
+* @Last Modified time: 2022-08-16 15:02:16
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -184,9 +184,6 @@ int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
 //发送应答消息消息，不等待应答。
 int msgq_send_ack(msgq_t *msgbuf)
 {
-//	int ret;
-//	int cmd = msgbuf->cmd;
-
 	if(msgid == -1) //未初始化
 	{
 		printf("send error,msgq_init first!!!\n");

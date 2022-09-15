@@ -362,7 +362,7 @@ static void usage(char* name)
 {
     show_version(name);
  
-    printf("    -h,    short help\n");
+    printf("    -h,    short this help\n");
     printf("    -v,    show version\n");
     printf("    -d /dev/ttyS0, select com device\n");
     printf("    -p , printf recv data\n");

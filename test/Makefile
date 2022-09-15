@@ -11,7 +11,7 @@ CFLAGS += -I../
 
 LDFLAGS = -L../
 LDFLAGS += -lpthread
-LDFLAGS += -ldrvapi22134
+LDFLAGS += -ldrv722_22134
 
 TARGET = drv722test
 

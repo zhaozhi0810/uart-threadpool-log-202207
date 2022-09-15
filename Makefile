@@ -42,11 +42,11 @@ TOPDIR := $(shell pwd)
 export TOPDIR
 
 # 最终目标
-TARGET := libdrvapi22134.so  drv_22134_server
+TARGET := libdrv722_22134.so  drv722_22134_server
 
 # 本次整个编译需要源 文件 和 目录
 # 这里的“obj-y”是自己定义的一个格式，和“STRIP”这些一样，*但是 一般内核会搜集 ”obj-”的变量*
-obj-y += drv_22134_server.o  drv_22134_api.o# 需要把当前目录下的 main.c 编进程序里
+obj-y += drv722_22134_server.o  drv722_22134_api.o# 需要把当前目录下的 main.c 编进程序里
 #obj-y += sub.o # 需要把当前目录下的 sub.c 编进程序里
  # 需要进入 subdir 这个子目录去寻找文件来编进程序里，具体是哪些文件，由 subdir 目录下的 Makefile 决定。
 obj-y +=  $(foreach dir, $(SUBDIRS), $(dir)/)   #audio-i2c/  keyboard/ kmUtil/  linux-gpio-app/ log_app/ msgq_app/ threadpool_app/
@@ -62,10 +62,10 @@ start_recursive_build:
 	make -C ./ -f $(TOPDIR)/Makefile.build
     
 # 处理最终目标，把前期处理得出的 built-in.o 用上
-drv_22134_server : drv_22134_server.o kmUtil_server/built-in.o msgq_api_server/built-in.o log_server/built-in.o threadpool_server/built-in.o
+drv722_22134_server : drv722_22134_server.o kmUtil_server/built-in.o msgq_api_server/built-in.o log_server/built-in.o threadpool_server/built-in.o
 	$(CC) -o $@ $^ $(LDFLAGS) -lpthread
 
-libdrvapi22134.so:drv_22134_api.o linux-gpio-api/built-in.o msgq_api_server/built-in.o audio-i2c_api/built-in.o keyboard_api/built-in.o   
+libdrv722_22134.so:drv722_22134_api.o linux-gpio-api/built-in.o msgq_api_server/built-in.o audio-i2c_api/built-in.o keyboard_api/built-in.o   
 	@echo "Create target " $@	
 	@$(CC) $^ -o $@ -fPIC -shared 
     
