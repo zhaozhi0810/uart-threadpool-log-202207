@@ -45,7 +45,7 @@ static int print_debug = 0;
 
 #define I2C_ADAPTER_DEVICE	"/dev/i2c-4"
 #define I2C_DEVICE_ADDR		(0x11)
-#define RTC_DEV				"/dev/rtc"
+#define RTC_DEV				"/dev/rtc0"   //2022-09-22 修改为rtc0
 
 
 #ifdef DEBUG_PRINTF

@@ -56,11 +56,11 @@ obj-y +=  $(foreach dir, $(SUBDIRS), $(dir)/)   #audio-i2c/  keyboard/ kmUtil/  
 all : start_recursive_build $(TARGET)
 	@[ -d test ] && make -C test
 	@echo $(TARGET) has been built !
-    
+	
 # 处理第一个依赖，**转到 Makefile.build 执行**
 start_recursive_build:
 	make -C ./ -f $(TOPDIR)/Makefile.build
-    
+	
 # 处理最终目标，把前期处理得出的 built-in.o 用上
 drv722_22134_server : drv722_22134_server.o kmUtil_server/built-in.o msgq_api_server/built-in.o log_server/built-in.o threadpool_server/built-in.o
 	$(CC) -o $@ $^ $(LDFLAGS) -lpthread
@@ -68,13 +68,13 @@ drv722_22134_server : drv722_22134_server.o kmUtil_server/built-in.o msgq_api_se
 libdrv722_22134.so:drv722_22134_api.o linux-gpio-api/built-in.o msgq_api_server/built-in.o audio-i2c_api/built-in.o keyboard_api/built-in.o   
 	@echo "Create target " $@	
 	@$(CC) $^ -o $@ -fPIC -shared 
-    
+	
 # 清理
 clean:
 	rm -f $(shell find -name "*.o")
 	rm -f $(TARGET)
 	[ -d test ]  && make clean -C test
-    
+	
 # 彻底清理
 distclean:clean
 #	rm -f $(shell find -name "*.o")

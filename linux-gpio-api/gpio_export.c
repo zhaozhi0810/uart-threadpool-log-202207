@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-29 10:06:39
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-08-10 10:23:03
+* @Last Modified time: 2022-09-23 09:44:16
 */
 
 #include <stdio.h>
@@ -45,10 +45,8 @@ int get_pin(unsigned int port,unsigned int whichpad)
 */
 static bool is_gpio_export(const int pin)
 {
-	char gpio_path[128] =
-	{
-		0
-	};
+	char gpio_path[128] = {0};
+
 	sprintf(gpio_path, "/sys/class/gpio/gpio%d", pin);
 
 	if (access(gpio_path, F_OK) == 0)
@@ -101,7 +99,7 @@ static bool gpio_export(const int pin)
 static bool gpio_unexport(const int pin)
 {
 	/***** 1.检测是否已经配置GPIO *****/
-	if (is_gpio_export(pin) == true)
+	if (is_gpio_export(pin) == false)  //修改为false，2022-09-23 dazhi
 	{
 		return true;
 	}
@@ -231,6 +229,13 @@ bool gpio_pull_enable(const int pin, bool enable)
 bool gpio_level_set(const int pin, GPIO_LEVEL level)
 {
 	char gpio_buf[64] ={0};
+	
+	if (gpio_export(pin) == false)
+	{
+		printf("export gpio%d faild \n", pin);
+		return false;
+	}
+
 	sprintf(gpio_buf, "/sys/class/gpio/gpio%d/value", pin);
 	int gpio_fd = open(gpio_buf, O_WRONLY);
 
@@ -260,6 +265,12 @@ bool gpio_level_read(const int pin, GPIO_LEVEL * level)
 {
 	char gpio_buf[64] = {0};
 	
+	if (gpio_export(pin) == false)
+	{
+		printf("export gpio%d faild \n", pin);
+		return false;
+	}
+
 	sprintf(gpio_buf, "/sys/class/gpio/gpio%d/value", pin);
 	int gpio_fd = open(gpio_buf, O_RDONLY);
 
