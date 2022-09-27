@@ -90,6 +90,7 @@ static void com_message_handle(unsigned char* com_recv_data)
 			case eMCU_RESET_LCD_TYPE:        //复位lcd 9211（复位引脚没有连通）
 			case eMCU_RESET_LFBOARD_TYPE:    //复位底板，好像没有这个功能！！！
 			case eMCU_MICCTRL_SETONOFF_TYPE:  //控制底板mic_ctrl引脚的电平
+			case eMCU_LEDS_FLASH_TYPE:      //led键灯闪烁控制
 				uart_recv_flag = com_recv_data[1] | (com_recv_data[2] <<8);  //¸ß8Î»±íÊ¾×´Ì¬		
 				break;
 			default:

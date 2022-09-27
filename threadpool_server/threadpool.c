@@ -117,6 +117,12 @@ struct threadpool* threadpool_init(int thread_num, int queue_max_num)
     return NULL;
 }
 
+
+
+//线程池增加任务
+//参数1，对应的线程池指针
+//参数2，线程执行的函数指针
+//参数3，线程函数需要的参数，不能为NULL
 int threadpool_add_job(struct threadpool* pool, void* (*callback_function)(void *arg), void *arg)
 {
     assert(pool != NULL);

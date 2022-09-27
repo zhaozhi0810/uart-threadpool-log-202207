@@ -43,7 +43,8 @@ enum API_CMD_types{
 	eAPI_RESET_COREBOARD_CMD,  //复位核心板
 	eAPI_RESET_LCD_CMD,        //复位lcd 9211（复位引脚没有连通）
 	eAPI_RESET_LFBOARD_CMD,    //复位底板，好像没有这个功能！！！
-	eAPI_MICCTRL_SETONOFF_CMD//,    //控制底板mic_ctrl引脚的电平
+	eAPI_MICCTRL_SETONOFF_CMD,    //控制底板mic_ctrl引脚的电平
+	eAPI_LEDS_FLASH_CMD//,  // led键灯闪烁控制
 };
 
 
