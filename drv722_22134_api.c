@@ -16,6 +16,7 @@
 #include <linux/rtc.h>
 //#include <linux/ioctl.h>
 #include <sys/ioctl.h>
+#include <pthread.h>
 // #include <sys/types.h>
 // #include <sys/stat.h>
 // #include <fcntl.h>
@@ -29,6 +30,7 @@
 #include "i2c_reg_rw.h"
 #include "drv_22134_server.h"
 #include "keyboard.h"
+#include "uart_to_mcu.h"
 //#include "drv_gpio_input_event.h"   //ptt事件的处理
 /*
 	与串口通信部分，使用msgq的方式，发送id为678，接收id为234
@@ -116,34 +118,34 @@ static int assert_init(void)
 
 //api发送数据给服务器，并且等待服务器应答，超时时间1s
 //第二个参数可以用于返回数据，无数据时可以为NULL
-int api_send_and_waitack(int cmd,int param1,int *param2)
-{
-	msgq_t msgbuf;  //用于应答
-	int ret;	
-	msgbuf.types = TYPE_API_SENDTO_SERVER;  //发送的信息类型
-	msgbuf.cmd = cmd;      //结构体赋值
-	msgbuf.param1 = param1;
-//	printf("API DEBUG: param1 = %d msgbuf.param1 = %d\n",param1,msgbuf.param1);
-	if(param2)
-		msgbuf.param2 = *param2;
-	else //空指针
-		msgbuf.param2 = 0;
-	msgbuf.ret = 0;   //一般没有使用
-//	printf("DEBUG: cmd = %d\n",cmd);
-	//3.做出应答
-	ret = msgq_send(TYPE_API_RECFROM_SERVER+cmd,&msgbuf,20); //数据发出后，需要等待 20表示1s
-	if(0!= ret)
-	{		
-		printf("error : msgq_send ,ret = %d\n",ret);
-		return ret;
-	} 
-//	printf("DEBUG: msgq_send ok\n");
-	//判断是否有返回数据
-	if(param2 && (msgbuf.ret>0))  //ret >0 表示有数据回来,小于0表示出错，等于0表示应答
-		*param2 = msgbuf.param1;   //用param1返回数据
+// int api_send_and_waitack(int cmd,int param1,int *param2)
+// {
+// 	msgq_t msgbuf;  //用于应答
+// 	int ret;	
+// 	msgbuf.types = TYPE_API_SENDTO_SERVER;  //发送的信息类型
+// 	msgbuf.cmd = cmd;      //结构体赋值
+// 	msgbuf.param1 = param1;
+// //	printf("API DEBUG: param1 = %d msgbuf.param1 = %d\n",param1,msgbuf.param1);
+// 	if(param2)
+// 		msgbuf.param2 = *param2;
+// 	else //空指针
+// 		msgbuf.param2 = 0;
+// 	msgbuf.ret = 0;   //一般没有使用
+// //	printf("DEBUG: cmd = %d\n",cmd);
+// 	//3.做出应答
+// 	ret = msgq_send(TYPE_API_RECFROM_SERVER+cmd,&msgbuf,20); //数据发出后，需要等待 20表示1s
+// 	if(0!= ret)
+// 	{		
+// 		printf("error : msgq_send ,ret = %d\n",ret);
+// 		return ret;
+// 	} 
+// //	printf("DEBUG: msgq_send ok\n");
+// 	//判断是否有返回数据
+// 	if(param2 && (msgbuf.ret>0))  //ret >0 表示有数据回来,小于0表示出错，等于0表示应答
+// 		*param2 = msgbuf.param1;   //用param1返回数据
 
-	return 0;	
-}
+// 	return 0;	
+// }
 
 
 static int __setlcdbrt(int nBrtVal)
@@ -203,72 +205,72 @@ static int getKeyboardTypePinInit(void)
 	return 0;
 }
 
-static int my_system(char* cmd)
-{
-	pid_t fpid; //fpid表示fork函数返回的值
+// static int my_system(char* cmd)
+// {
+// 	pid_t fpid; //fpid表示fork函数返回的值
 
-	if(cmd == NULL)  //空指针
- 		return -1;
+// 	if(cmd == NULL)  //空指针
+//  		return -1;
 
- 	int ret = access(cmd, F_OK | X_OK);  //文件存在并且可执行吗？
- 	if(ret)  //返回0成功，-1失败
- 	{
- 		printf("access %s return -1\n",cmd);
- 		return -1;
- 	}
+//  	int ret = access(cmd, F_OK | X_OK);  //文件存在并且可执行吗？
+//  	if(ret)  //返回0成功，-1失败
+//  	{
+//  		printf("access %s return -1\n",cmd);
+//  		return -1;
+//  	}
 
-    fpid = fork();
-    if (fpid < 0)
-    {    
-    	printf("error in fork!");
-    	return -1;
-	}
-    else if (fpid == 0) {
-       execl(cmd, cmd, NULL);
-       return -1;
-    } 
-    //else {   //父进程
-    return 0;
-}
+//     fpid = fork();
+//     if (fpid < 0)
+//     {    
+//     	printf("error in fork!");
+//     	return -1;
+// 	}
+//     else if (fpid == 0) {
+//        execl(cmd, cmd, NULL);
+//        return -1;
+//     } 
+//     //else {   //父进程
+//     return 0;
+// }
 
 
 //ps -ef | grep drv_22134_server | grep -v grep | wc -l
 //尝试启动server进程
 //返回0表示server进程已经存在，-1表示出错
-static int start_server_process(void)
-{
-	FILE *ptr = NULL;
-	char cmd[] = "ps -ef | grep drv722_22134_server | grep -v grep | wc -l";
-//	int status = 0;
-	char buf[64];
-	int count;
+// static int start_server_process(void)
+// {
+// 	FILE *ptr = NULL;
+// 	char cmd[] = "ps -ef | grep drv722_22134_server | grep -v grep | wc -l";
+// //	int status = 0;
+// 	char buf[64];
+// 	int count;
 
-	if((ptr = popen(cmd, "r")) == NULL)
-	{
-		printf("popen err\n");
-		return -1;
-	}
-	memset(buf, 0, sizeof(buf));
-	if((fgets(buf, sizeof(buf),ptr))!= NULL)//获取进程和子进程的总数
-	{
-		count = atoi(buf);
-		if(count <= 0)//当进程数小于等于0时，说明进程不存在
-		{
-			my_system("/root/drv722_22134_server");    //system 会启动两个进程，会导致判断出现一点问题
-			printf("api start drv722_22134_server \n");
-			usleep(500000);  //等待一下
-		}
-	}
-	pclose(ptr);
-	return 0;
-}
+// 	if((ptr = popen(cmd, "r")) == NULL)
+// 	{
+// 		printf("popen err\n");
+// 		return -1;
+// 	}
+// 	memset(buf, 0, sizeof(buf));
+// 	if((fgets(buf, sizeof(buf),ptr))!= NULL)//获取进程和子进程的总数
+// 	{
+// 		count = atoi(buf);
+// 		if(count <= 0)//当进程数小于等于0时，说明进程不存在
+// 		{
+// 			my_system("/root/drv722_22134_server");    //system 会启动两个进程，会导致判断出现一点问题
+// 			printf("api start drv722_22134_server \n");
+// 			usleep(500000);  //等待一下
+// 		}
+// 	}
+// 	pclose(ptr);
+// 	return 0;
+// }
 
 
 
 //检查进程是否正在运行，防止运行多个进程
 //返回0，表示第一次启动API，否则为多次，则应该不允许启动
-static int isProcessRunning()
-{	
+//static int isProcessRunning()
+//{	
 #if 0
     lock_fd = open("/tmp/drvApi22134.lock",O_CREAT|O_RDWR,0666);
     if(lock_fd < 0)
@@ -291,21 +293,26 @@ static int isProcessRunning()
     return 0;   //成功加锁。
 #else
     //2022-08-09改为msgq通信确认进程是否存在，发送pid过去
-    pid_t pid;
-    int ret = 0;   //参数需要一个指针，返回函数返回值
-    pid = getpid();  //获得自己的pid
+    // pid_t pid;
+    // int ret = 0;   //参数需要一个指针，返回函数返回值
+    // pid = getpid();  //获得自己的pid
 //    printf("API pid = %d\n",pid);
 	// if(assert_init())  //未初始化
 	// 	return -1;
 	//查询是否存在api进程，让服务进程查询
-	if(api_send_and_waitack(eAPI_CHECK_APIRUN_CMD,pid,&ret))  //发送的第二个参数表示pid，参数3用于返回结果，0表示没有启动API，1表示已经存在，-1表示出错
-	{
-		printf("error : isProcessRunning pid = %d\n",pid);
-		return -1;
-	}
-	return ret;
+	
+ //    unsigned char mcu_cmd_buf[2];
+	// mcu_cmd_buf[0] = eMCU_HWTD_SETONOFF_TYPE;
+	// mcu_cmd_buf[1] = 1;   //enable
+	// return send_mcu_data(mcu_cmd_buf); 
+	// if(api_send_and_waitack(eAPI_CHECK_APIRUN_CMD,pid,&ret))  //发送的第二个参数表示pid，参数3用于返回结果，0表示没有启动API，1表示已经存在，-1表示出错
+	// {
+	// 	printf("error : isProcessRunning pid = %d\n",pid);
+	// 	return -1;
+	// }
+//	return ret;
 #endif    
-}
+//}
 
 
 //1. 核心板初始化函数
@@ -314,29 +321,24 @@ static int isProcessRunning()
 int drvCoreBoardInit(void)
 {
 	int ret ;
+	pthread_t thread;
 
 	if(CoreBoardInit == 1)  //已经初始化了
 		return 0;
 
 	printf("drvCoreBoardInit running,Buildtime %s\n",g_build_time_str);
-
-	start_server_process();
-	atexit(at_exit_close_file); //注册一个退出函数
-	
-	ret = msgq_init();
-	if(ret)  //不为0，表示出错！！
+	atexit(at_exit_close_file);
+	//串口通信	
+	if(0 != uart_init(1, NULL))
 	{
-		DBG_PRINTF("ERROR: msgq_init ret = %d\n",ret);
-		CoreBoardInit = -1;   //记录初始化失败
-		return ret;
-	}
-	
-	if(isProcessRunning())   //防止程序被多次运行
-	{
-		printf("API:isProcessRunning return !0\n");
-		exit(-1);   //结束进程
+		printf("error:uart_init \n");
+		return -1;
 	}
 
+	//串口接收的线程
+	pthread_create(&thread, NULL, mcu_recvSerial_thread, NULL);
+
+	//获取键盘的类型
 	ret = getKeyboardTypePinInit();  //用于键盘识别的引脚初始化，在本文件中
 	if(ret) //不为0，表示出错！！
 	{
@@ -345,6 +347,7 @@ int drvCoreBoardInit(void)
 		return ret;
 	}
 
+	//音频控制的iic初始化
 	ret = i2c_adapter_init(I2C_ADAPTER_DEVICE, I2C_DEVICE_ADDR);
 	if(ret) //不为0，表示出错！！
 	{
@@ -382,7 +385,7 @@ void drvCoreBoardExit(void)
 	gpio_direction_unset(KeyboardTypepins[1]);
 	gpio_direction_unset(KeyboardTypepins[2]);
 
-	msgq_exit();  //清除消息队列中的消息
+//	msgq_exit();  //清除消息队列中的消息
 	CoreBoardInit = 0;   //未初始化了！！！
 
 	if(lock_fd >= 0)   //文件被打开，则关闭
@@ -398,6 +401,8 @@ void drvCoreBoardExit(void)
 
 
 
+	unsigned char mcu_cmd_buf[2];
+
 
 
 
@@ -408,15 +413,19 @@ void drvCoreBoardExit(void)
 //1：设置失败
 int drvWatchDogEnable(void)
 {
-	int param = 1;
+//	int param = 1;
 	if(assert_init())  //未初始化
 		return -1;
 
-	if(api_send_and_waitack(eAPI_HWTD_SETONOFF_CMD,param,&param))  //发送的第2个参数1 表示使能
-	{
-		printf("error : drvWatchDogEnable\n");
-		return 1;
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_HWTD_SETONOFF_TYPE;
+	mcu_cmd_buf[1] = 1;   //enable
+	return send_mcu_data(mcu_cmd_buf);   //返回0表示成功，结果保存在buf[0]中
+	// if(api_send_and_waitack(eAPI_HWTD_SETONOFF_CMD,param,&param))  //发送的第2个参数1 表示使能
+	// {
+	// 	printf("error : drvWatchDogEnable\n");
+	// 	return 1;
+	// }
 	return 0;
 }
 
@@ -426,15 +435,19 @@ int drvWatchDogEnable(void)
 //1：设置失败
 int drvWatchDogDisable(void)
 {
-	int param = 0;
+//	int param = 0;
 	if(assert_init())  //未初始化
 		return -1;
 
-	if(api_send_and_waitack(eAPI_HWTD_SETONOFF_CMD,param,&param))  //发送的第2个参数0 表示禁止
-	{
-		printf("error : drvWatchDogDisable\n");
-		return 1;
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_HWTD_SETONOFF_TYPE;
+	mcu_cmd_buf[1] = 0;   //disable
+	return send_mcu_data(mcu_cmd_buf); 
+	// if(api_send_and_waitack(eAPI_HWTD_SETONOFF_CMD,param,&param))  //发送的第2个参数0 表示禁止
+	// {
+	// 	printf("error : drvWatchDogDisable\n");
+	// 	return 1;
+	// }
 
 	return 0;
 }
@@ -442,22 +455,27 @@ int drvWatchDogDisable(void)
 //4. 喂狗函数
 void drvWatchDogFeeding(void)
 {
-	int param = 0;
+//	int param = 0;
 	if(assert_init())  //未初始化
 		return;
 
-	if(api_send_and_waitack(eAPI_HWTD_FEED_CMD,param,&param))  //发送的第2，3个参数无意义
-	{
-		printf("error : drvWatchDogFeeding\n");
-		return;
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_HWTD_FEED_TYPE;
+	mcu_cmd_buf[1] = 0;   //不需要关心
+	send_mcu_data(mcu_cmd_buf); 
+	return ;
+	// if(api_send_and_waitack(eAPI_HWTD_FEED_CMD,param,&param))  //发送的第2，3个参数无意义
+	// {
+	// 	printf("error : drvWatchDogFeeding\n");
+	// 	return;
+	// }
 }
 
 //5. 设置看门狗超时时间
 //（参数timeout 只支持1-250，表示100ms-25S的范围）
 int drvWatchdogSetTimeout(int timeout)
 {
-	int param = 0;
+//	int param = 0;
 	if(assert_init())  //未初始化
 		return -1;
 
@@ -466,12 +484,16 @@ int drvWatchdogSetTimeout(int timeout)
 	else if(timeout > 250)
 		timeout = 250;
 
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_HWTD_SETTIMEOUT_TYPE;
+	mcu_cmd_buf[1] = timeout;   //不需要关心
+	return send_mcu_data(mcu_cmd_buf);
 
-	if(api_send_and_waitack(eAPI_HWTD_SETTIMEOUT_CMD,timeout,&param))  //发送的第2，3个参数无意义
-	{
-		printf("error : drvWatchdogSetTimeout timeout = %d\n",timeout);
-		return -1;
-	}
+	// if(api_send_and_waitack(eAPI_HWTD_SETTIMEOUT_CMD,timeout,&param))  //发送的第2，3个参数无意义
+	// {
+	// 	printf("error : drvWatchdogSetTimeout timeout = %d\n",timeout);
+	// 	return -1;
+	// }
 	return 0;
 }
 
@@ -483,11 +505,16 @@ int drvWatchdogGetTimeout(void)
 	if(assert_init())  //未初始化
 		return 0;
 //	MY_PRINTF("nothing todo 2022-07-27\n");
-	if(api_send_and_waitack(eAPI_HWTD_GETTIMEOUT_CMD,0,&param))  //发送的第二个参数无意义，第三个用于返回值
-	{
-		printf("error : drvWatchdogGetTimeout \n");
-		return 0;
-	}
+	// if(api_send_and_waitack(eAPI_HWTD_GETTIMEOUT_CMD,0,&param))  //发送的第二个参数无意义，第三个用于返回值
+	// {
+	// 	printf("error : drvWatchdogGetTimeout \n");
+	// 	return 0;
+	// }
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_HWTD_GETTIMEOUT_TYPE;
+	mcu_cmd_buf[1] = 0;   //不需要关心
+	if(send_mcu_data(mcu_cmd_buf)==0)
+		param = mcu_cmd_buf[0];
 	printf("drvWatchdogGetTimeout Timeout（1-250） = %d\n",param);
 	return param;   //返回的温度只有整数部分！！
 //	return 0;
@@ -725,13 +752,18 @@ float drvGetBoardTemp(void)
 		return 0.0;
 //	MY_PRINTF("nothing todo 2022-07-27\n");
 	//改为从单片机获得温度
-	if(api_send_and_waitack(eAPI_BOART_TEMP_GET_CMD,0,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
-	{
-		printf("error : drvGetBoardTemp \n");
-		return 0.0;
-	}
+	// if(api_send_and_waitack(eAPI_BOART_TEMP_GET_CMD,0,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	// {
+	// 	printf("error : drvGetBoardTemp \n");
+	// 	return 0.0;
+	// }
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_GET_TEMP_TYPE;
+	mcu_cmd_buf[1] = 0;   //不需要关心
+	if(send_mcu_data(mcu_cmd_buf)==0)
+		param = mcu_cmd_buf[0];
 	printf("drvGetBoardTemp param = %d\n",param);
-	return param;   //返回的温度只有整数部分！！
+	return (float)param;   //返回的温度只有整数部分！！
 
 	//nothing todo 2022-07-27	
 	//return 0.0;
@@ -800,14 +832,20 @@ long drvSetRTC(long secs)
 //25. 设置LED灯亮度  参数范围为[0,0x64]
 void drvSetLedBrt(int nBrtVal)
 {
-	int param = 1;
+//	int param = 1;
 	if(assert_init())  //未初始化
 		return;
 
-	if(api_send_and_waitack(eAPI_LEDSETPWM_CMD,nBrtVal,&param))  //发送的第二个参数表示亮度，第三个无意义
-	{
-		printf("error : drvSetLedBrt ,nBrtVal = %d\n",nBrtVal);
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_LEDSETPWM_TYPE;
+	mcu_cmd_buf[1] = nBrtVal;   //不需要关心
+	send_mcu_data(mcu_cmd_buf);
+
+
+	// if(api_send_and_waitack(eAPI_LEDSETPWM_CMD,nBrtVal,&param))  //发送的第二个参数表示亮度，第三个无意义
+	// {
+	// 	printf("error : drvSetLedBrt ,nBrtVal = %d\n",nBrtVal);
+	// }
 }
 
 
@@ -831,55 +869,73 @@ void drvSetLcdBrt(int nBrtVal)
 //27. 点亮对应的键灯，单片机命令
 void drvLightLED(int nKeyIndex)
 {
-	int param = 1;
+//	int param = 1;
 	if(assert_init())  //未初始化
 		return;
 
-	if(api_send_and_waitack(eAPI_LEDSET_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
-	{
-		printf("error : drvLightLED ,nKeyIndex = %d\n",nKeyIndex);
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_LED_SETON_TYPE;
+	mcu_cmd_buf[1] = nKeyIndex;   //不需要关心
+	send_mcu_data(mcu_cmd_buf);
+
+	// if(api_send_and_waitack(eAPI_LEDSET_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	// {
+	// 	printf("error : drvLightLED ,nKeyIndex = %d\n",nKeyIndex);
+	// }
 
 }
 
 //28. 熄灭对应的键灯
 void drvDimLED(int nKeyIndex)
 {
-	int param = 0;
+//	int param = 0;
 	if(assert_init())  //未初始化
 		return;
 
-	if(api_send_and_waitack(eAPI_LEDSET_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
-	{
-		printf("error : drvDimLED ,nKeyIndex = %d\n",nKeyIndex);
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_LED_SETOFF_TYPE;
+	mcu_cmd_buf[1] = nKeyIndex;   //不需要关心
+	send_mcu_data(mcu_cmd_buf);
+
+	// if(api_send_and_waitack(eAPI_LEDSET_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	// {
+	// 	printf("error : drvDimLED ,nKeyIndex = %d\n",nKeyIndex);
+	// }
 
 }
 
 //29. 点亮所有的键灯
 void drvLightAllLED(void)
 {
-	int param = 1;
+//	int param = 1;
 	if(assert_init())  //未初始化
 		return;
 
-	if(api_send_and_waitack(eAPI_LEDSETALL_CMD,1,&param))  //发送的第二个参数无意义，第三个表示点亮还是熄灭
-	{
-		printf("error : drvLightAllLED \n");
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_LEDSETALL_TYPE;
+	mcu_cmd_buf[1] = 1;   //1点亮
+	send_mcu_data(mcu_cmd_buf);
+	// if(api_send_and_waitack(eAPI_LEDSETALL_CMD,1,&param))  //发送的第二个参数无意义，第三个表示点亮还是熄灭
+	// {
+	// 	printf("error : drvLightAllLED \n");
+	// }
 }
 
 //30. 熄灭所有的键灯
 void drvDimAllLED(void)
 {
-	int param = 0;
+//	int param = 0;
 	if(assert_init())  //未初始化
 		return;
 
-	if(api_send_and_waitack(eAPI_LEDSETALL_CMD,0,&param))  //发送的第二个参数无意义，第三个表示点亮还是熄灭
-	{
-		printf("error : drvDimAllLED \n");
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_LEDSETALL_TYPE;
+	mcu_cmd_buf[1] = 0;   //0熄灭
+	send_mcu_data(mcu_cmd_buf);
+	// if(api_send_and_waitack(eAPI_LEDSETALL_CMD,0,&param))  //发送的第二个参数无意义，第三个表示点亮还是熄灭
+	// {
+	// 	printf("error : drvDimAllLED \n");
+	// }
 
 }
 
@@ -890,11 +946,16 @@ int drvGetLEDStatus(int nKeyIndex)
 	if(assert_init())  //未初始化
 		return -1;
 
-	if(api_send_and_waitack(eAPI_LEDGET_CMD,nKeyIndex,&status))  //发送的第二个参数表示led号，第三个无意义
-	{
-		status = -1;  //没有获得状态
-		printf("error : drvGetLEDStatus ,nKeyIndex = %d\n",nKeyIndex);
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_LED_STATUS_TYPE;
+	mcu_cmd_buf[1] = 0;   //不关心
+	if(0 == send_mcu_data(mcu_cmd_buf))
+		return mcu_cmd_buf[0];
+	// if(api_send_and_waitack(eAPI_LEDGET_CMD,nKeyIndex,&status))  //发送的第二个参数表示led号，第三个无意义
+	// {
+	// 	status = -1;  //没有获得状态
+	// 	printf("error : drvGetLEDStatus ,nKeyIndex = %d\n",nKeyIndex);
+	// }
 
 	return status;
 }
@@ -971,15 +1032,21 @@ float drvGetCurrent(void)
 //38. Lcd屏重置，返回0表示正确
 int drvLcdReset(void)
 {
-	int param = 1;
+//	int param = 1;
 	if(assert_init())  //未初始化
 		return -1;
 
-	if(api_send_and_waitack(eAPI_RESET_LCD_CMD,1,&param))  //发送的第二个参数无意义，第三个无意义
-	{
-		printf("error : drvLcdReset \n");
-		return -1;
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_RESET_LCD_TYPE;
+	mcu_cmd_buf[1] = 0;   //不关心
+	return  send_mcu_data(mcu_cmd_buf);
+	//	return mcu_cmd_buf[0];
+
+	// if(api_send_and_waitack(eAPI_RESET_LCD_CMD,1,&param))  //发送的第二个参数无意义，第三个无意义
+	// {
+	// 	printf("error : drvLcdReset \n");
+	// 	return -1;
+	// }
 	return 0;
 }
 
@@ -1004,15 +1071,19 @@ int drvIfBrdReset(void)
 //40.核心板重置，返回0表示正确
 int drvCoreBrdReset(void)
 {
-	int param = 1;
+//	int param = 1;
 	if(assert_init())  //未初始化
 		return -1;
 
-	if(api_send_and_waitack(eAPI_RESET_COREBOARD_CMD,1,&param))  //发送的第二个参数无意义，第三个无意义
-	{
-		printf("error : drvCoreBrdReset \n");
-		return -1;
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_RESET_COREBOARD_TYPE;
+	mcu_cmd_buf[1] = 0;   //不关心
+	return  send_mcu_data(mcu_cmd_buf);
+	// if(api_send_and_waitack(eAPI_RESET_COREBOARD_CMD,1,&param))  //发送的第二个参数无意义，第三个无意义
+	// {
+	// 	printf("error : drvCoreBrdReset \n");
+	// 	return -1;
+	// }
 	return 0;
 }
 
@@ -1291,11 +1362,15 @@ void api_handptt_change(int status)
 	// 	return;
 
 //	printf("api_handptt_change\n");
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_MICCTRL_SETONOFF_TYPE;
+	mcu_cmd_buf[1] = !!status;   //非0表示按下，0表示松开
+	send_mcu_data(mcu_cmd_buf);
 
-	if(api_send_and_waitack(eAPI_MICCTRL_SETONOFF_CMD,status,NULL))  //发送的第二个参数ptt当前状态，第三个参数无意义
-	{
-		printf("error : api_handptt_change ,status = %d\n",status);
-	}
+	// if(api_send_and_waitack(eAPI_MICCTRL_SETONOFF_CMD,status,NULL))  //发送的第二个参数ptt当前状态，第三个参数无意义
+	// {
+	// 	printf("error : api_handptt_change ,status = %d\n",status);
+	// }
 
 }
 
@@ -1303,13 +1378,17 @@ void api_handptt_change(int status)
 //键灯led闪烁接口 (1-40)
 void drvFlashLEDs(int nKeyIndex)
 {
-	int param = 1;
+//	int param = 1;
 	if(assert_init())  //未初始化
 		return;
 
-	if(api_send_and_waitack(eAPI_LEDS_FLASH_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
-	{
-		printf("error : drvLightLED ,nKeyIndex = %d\n",nKeyIndex);
-	}
+	unsigned char mcu_cmd_buf[2];
+	mcu_cmd_buf[0] = eMCU_LEDS_FLASH_TYPE;
+	mcu_cmd_buf[1] = nKeyIndex;   //非0表示按下，0表示松开
+	send_mcu_data(mcu_cmd_buf);
 
+	// if(api_send_and_waitack(eAPI_LEDS_FLASH_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	// {
+	// 	printf("error : drvLightLED ,nKeyIndex = %d\n",nKeyIndex);
+	// }
 }

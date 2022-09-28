@@ -47,6 +47,9 @@ static void *s_recv_event_thread(void *arg) {
 	int gpio_event_dev_fd = 0;  //2022-08-15增加
 	struct input_event ts;
 	int max_fd = 0;
+	static int gpio,val;
+
+
 
 	CHECK((gpio_event_dev_fd = open(gpio_event_dev, O_RDONLY)) > 0, NULL, "Error open with %d: %s", errno, strerror(errno));
 	CHECK((event_dev_fd = open(event_dev_name, O_RDONLY, 0)) > 0, NULL, "Error open with %d: %s", errno, strerror(errno));
@@ -75,16 +78,23 @@ static void *s_recv_event_thread(void *arg) {
 				continue;
 			}
 			if(ts.type == EV_KEY) {	
-				INFO("panel : Key %#x, value %#x", ts.code, ts.value);
-			//	printf("KEY_P = %d\n",KEY_P);
-				if((ts.code == KEY_P) && s_gpio_notify_func){  //对PTT按键特殊处理一下！！					
-					s_gpio_notify_func(ts.code, ts.value);					
-				//	printf("ptt1\n");
-				}
-				else //除了PTT以外的按键
+				
+				if((gpio!=ts.code)||(val!=ts.value))
 				{
-					if(s_key_notify_func) {
-						s_key_notify_func(ts.code, ts.value);
+					gpio=ts.code;
+					val=ts.value;
+				
+					INFO("panel : Key %#x, value %#x", ts.code, ts.value);
+				//	printf("KEY_P = %d\n",KEY_P);
+					if((ts.code == KEY_P) && s_gpio_notify_func){  //对PTT按键特殊处理一下！！					
+						s_gpio_notify_func(ts.code, ts.value);					
+					//	printf("ptt1\n");
+					}
+					else //除了PTT以外的按键
+					{
+						if(s_key_notify_func) {
+							s_key_notify_func(ts.code, ts.value);
+						}
 					}
 				}
 			}

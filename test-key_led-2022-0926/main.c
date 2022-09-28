@@ -86,10 +86,26 @@ static int s_signal_init(void) {
 }
 
 static void s_gpio_notify_func(int gpio, int val) {
+	static int gpio_last = 0,val_last = 0;
+	if((gpio == gpio_last) && (val == val_last))
+		return;
+	else
+	{
+		gpio_last = gpio;
+		val_last = val;
+	}
 	INFO("Key %#x, value %#x\n", gpio, val);
 }
 
 static void s_panel_key_notify_func(int gpio, int val) {
+	static int gpio_last = 0,val_last = 0;
+	if((gpio == gpio_last) && (val == val_last))
+		return;
+	else
+	{
+		gpio_last = gpio;
+		val_last = val;
+	}
 	INFO("panel_Key %#x, value %#x\n", gpio, val);
 }
 

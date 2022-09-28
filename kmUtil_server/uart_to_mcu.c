@@ -321,10 +321,10 @@ int send_mcu_data(const void* data)
 		//·¢ËÍ³É¹¦£¬µÈ´ýÓ¦´ð
 		while(uart_recv_flag == 0)
 		{
-			usleep(100000);   //100ms
+			usleep(100);   //100us
 			i++;
 			
-			if(i>10)  //等待1s
+			if(i>10000)  //等待1s
 			{
 				uart_recv_flag = 0;  //超时清零
 				printf("Error, send_mcu_data recv timeout !!cmd = %d\n",((unsigned char*)data)[0]);	
@@ -390,61 +390,61 @@ int uart_init(int argc, char *argv[])
 
 //	create_queue(&keyCmdQueue);//´´½¨¼üÅÌÏûÏ¢»·ÐÎ¶ÓÁÐ
 //	create_queue(&mouseCmdQueue);//´´½¨Êó±êÏûÏ¢»·ÐÎ¶ÓÁÐ
-	printf("Program %s is running\n", argv[0]);
-    if(argc != 1)
-	{
-	//	printf("usage: ./kmUtil keyboardComName mouseComName\n");		
-	    while(1)
-	    {
-	        c = getopt(argc, argv, my_opt);
-	        //printf("optind: %d\n", optind);
-	        if (c < 0)
-	        {
-	            break;
-	        }
-	        //printf("option char: %x %c\n", c, c);
-	        switch(c)
-	        {
-	        case 'p':
-	        		p_opt = 1;
-	                //debug_level = atoi(optarg);
-	                printf("p_opt = 1\n");
-	                break;
-	        case 'd':
-	        	//	com_port = 	
-	                if(strncmp(optarg,"/dev/tty",8) == 0)
-	             		com_port = optarg;
-	             	else
-	             		printf("select device error ,start with /dev/tty please!\n");
-	                printf("com_port = %s.\n\n",com_port);
-	                break;
-	        case 'b':
-	        		baudrate = atoi(optarg);
-	        		if(baudrate < 1200)
-	        			baudrate = 115200;
-	                printf("set baudrate is: %d\n\n", baudrate);
-	             //   p1 = optarg;
-	                break;
-	        case 'n':
-	                printf("set com nonblock mode\n\n");
-	                nonblock = 1;
-	                break;
-	        case ':':
-	                fprintf(stderr, "miss option char in optstring.\n");
-	                break;
-	        case '?':
-	        case 'h':
-	        default:
-	                usage(argv[0]);
-	                break;
-	                //return 0;
-	        }
-	    }
-	    if (optind == 1)
-	    {
-	        usage(argv[0]);
-	    }
-	}
+//	printf("Program %s is running\n", argv[0]);
+ //    if(argc != 1)
+	// {
+	// //	printf("usage: ./kmUtil keyboardComName mouseComName\n");		
+	//     while(1)
+	//     {
+	//         c = getopt(argc, argv, my_opt);
+	//         //printf("optind: %d\n", optind);
+	//         if (c < 0)
+	//         {
+	//             break;
+	//         }
+	//         //printf("option char: %x %c\n", c, c);
+	//         switch(c)
+	//         {
+	//         case 'p':
+	//         		p_opt = 1;
+	//                 //debug_level = atoi(optarg);
+	//                 printf("p_opt = 1\n");
+	//                 break;
+	//         case 'd':
+	//         	//	com_port = 	
+	//                 if(strncmp(optarg,"/dev/tty",8) == 0)
+	//              		com_port = optarg;
+	//              	else
+	//              		printf("select device error ,start with /dev/tty please!\n");
+	//                 printf("com_port = %s.\n\n",com_port);
+	//                 break;
+	//         case 'b':
+	//         		baudrate = atoi(optarg);
+	//         		if(baudrate < 1200)
+	//         			baudrate = 115200;
+	//                 printf("set baudrate is: %d\n\n", baudrate);
+	//              //   p1 = optarg;
+	//                 break;
+	//         case 'n':
+	//                 printf("set com nonblock mode\n\n");
+	//                 nonblock = 1;
+	//                 break;
+	//         case ':':
+	//                 fprintf(stderr, "miss option char in optstring.\n");
+	//                 break;
+	//         case '?':
+	//         case 'h':
+	//         default:
+	//                 usage(argv[0]);
+	//                 break;
+	//                 //return 0;
+	//         }
+	//     }
+	//     if (optind == 1)
+	//     {
+	//         usage(argv[0]);
+	//     }
+	// }
 	// Return an error if device not found. 
 	if (setup_uinput_device())   //正确返回0
 	{ 

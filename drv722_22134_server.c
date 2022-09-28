@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-09-26 19:37:14
+* @Last Modified time: 2022-09-27 17:37:53
 */
 
 
@@ -396,11 +396,11 @@ int main(int argc, char *argv[])
 	}	
 
 	//转为守护进程
-	if(daemon(0,0))   //daemon 2022-08-08
-	{
-		perror("daemon");
-		return -1;
-	}
+	// if(daemon(0,0))   //daemon 2022-08-08
+	// {
+	// 	perror("daemon");
+	// 	return -1;
+	// }
 
 	//串口通信	
 	if(0 != uart_init(argc, argv))
@@ -410,11 +410,11 @@ int main(int argc, char *argv[])
 	}
 
 		//用于通信的消息队列
-	if(0 != msgq_init())
-	{
-		printf("error : msgq_init\n");
-		return -1;
-	}
+	// if(0 != msgq_init())
+	// {
+	// 	printf("error : msgq_init\n");
+	// 	return -1;
+	// }
 
 #if 1
 		//日志记录
