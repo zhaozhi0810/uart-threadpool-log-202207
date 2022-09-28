@@ -1300,4 +1300,16 @@ void api_handptt_change(int status)
 }
 
 
+//键灯led闪烁接口 (1-40)
+void drvFlashLEDs(int nKeyIndex)
+{
+	int param = 1;
+	if(assert_init())  //未初始化
+		return;
 
+	if(api_send_and_waitack(eAPI_LEDS_FLASH_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	{
+		printf("error : drvLightLED ,nKeyIndex = %d\n",nKeyIndex);
+	}
+
+}

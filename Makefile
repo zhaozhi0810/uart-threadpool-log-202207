@@ -21,6 +21,7 @@ SUBDIRS=$(shell ls -l | grep ^d | awk '{if($$9 != "test") print $$9}')
 #SUBDIRS:=$(patsubst $(OUTLIBSDIR),,$(SUBDIRS))
 # 因为在根目录下存在一个 log 文件夹，此文件只为了放置日志文件，并不需要参与编译
 SUBDIRS:=$(patsubst log,,$(SUBDIRS))
+SUBDIRS:=$(patsubst test-key_led-2022-0926,,$(SUBDIRS))
 SUBDIRS:=$(patsubst mixer_scontrols_app,,$(SUBDIRS))
 
 

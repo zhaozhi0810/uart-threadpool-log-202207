@@ -79,6 +79,7 @@ enum {
 	TEST_ITEM_SET_TUNE_DOWN,
 	TEST_ITEM_SET_HWTD_TIMEOUT,   //设置硬件看门狗超时时间
 	TEST_ITEM_GET_HWTD_TIMEOUT,   //,  //获得硬件看门狗超时时间
+	TEST_ITEM_SET_LEDS_FLASH,      //设置闪烁，大于一个则开启线程
 	TEST_PRINT_VERSION            //打印版本，保持为最后一项
 };
 
@@ -137,6 +138,7 @@ static void s_show_usage(void) {
 	printf("\t%2d - Set tune Down\n", TEST_ITEM_SET_TUNE_DOWN);
 	printf("\t%2d - Set Hard watchdog timerout\n", TEST_ITEM_SET_HWTD_TIMEOUT);
 	printf("\t%2d - Get Hard watchdog timerout\n", TEST_ITEM_GET_HWTD_TIMEOUT);
+	printf("\t%2d - Set  leds flash\n", TEST_ITEM_SET_LEDS_FLASH);
 	printf("\t%2d - Print program build time\n", TEST_PRINT_VERSION);  //版本打印，保持为最后一项
 	printf("\tOther - Exit\n");
 }
@@ -160,10 +162,26 @@ static int s_signal_init(void) {
 }
 
 static void s_gpio_notify_func(int gpio, int val) {
-	INFO("Key %#x, value %#x\n", gpio, val);
+	static int gpio_last = 0,val_last = 0;
+	if((gpio == gpio_last) && (val == val_last))
+		return;
+	else
+	{
+		gpio_last = gpio;
+		val_last = val;
+	}
+	INFO("gpio_Key %#x, value %#x\n", gpio, val);
 }
 
 static void s_panel_key_notify_func(int gpio, int val) {
+	static int gpio_last = 0,val_last = 0;
+	if((gpio == gpio_last) && (val == val_last))
+		return;
+	else
+	{
+		gpio_last = gpio;
+		val_last = val;
+	}	
 	INFO("Key %#x, value %#x\n", gpio, val);
 }
 
@@ -186,7 +204,7 @@ static void *s_watchdog_feed_thread(void *param) {
 int main(int args, char *argv[]) {
 	int test_item_index = -1;
 	pthread_t watchdog_feed_thread_id = 0;
-
+	int KeyIndex = 0;
 
 	printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
 
@@ -383,7 +401,7 @@ int main(int args, char *argv[]) {
 		// 
 		case TEST_ITEM_SET_KEYBOARD_LED_ON:
 		{
-			int KeyIndex = 0;
+			
 			INFO("Please input KeyIndex: (%u-%u)", KEY_VALUE_MIN, KEY_VALUE_MAX);
 			if(scanf("%d", &KeyIndex) != 1) {
 				ERR("Error scanf with %d: %s", errno, strerror(errno));
@@ -398,7 +416,7 @@ int main(int args, char *argv[]) {
 		}		
 		case TEST_ITEM_SET_KEYBOARD_LED_OFF:
 		{
-			int KeyIndex = 0;
+			
 			INFO("Please input KeyIndex: (%u-%u)", KEY_VALUE_MIN, KEY_VALUE_MAX);
 			if(scanf("%d", &KeyIndex) != 1) {
 				ERR("Error scanf with %d: %s", errno, strerror(errno));
@@ -555,6 +573,18 @@ int main(int args, char *argv[]) {
 			INFO("Get hard watchdog timeout = %d!\n", timeout);
 			break;	
 		}
+		case TEST_ITEM_SET_LEDS_FLASH:		
+			INFO("Please input KeyIndex: (%u-%u)", KEY_VALUE_MIN, KEY_VALUE_MAX);
+			if(scanf("%d", &KeyIndex) != 1) {
+				ERR("Error scanf with %d: %s", errno, strerror(errno));
+				continue;
+			}
+			if(KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX){
+				ERR("Error KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX");
+				continue;
+			}
+			drvFlashLEDs(KeyIndex);
+		break;
 		case TEST_PRINT_VERSION:
 			printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
 			drvShowVersion();

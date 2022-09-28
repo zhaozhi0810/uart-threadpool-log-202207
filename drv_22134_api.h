@@ -183,5 +183,7 @@ void drvSelectEarphMic(void);
 //打印编译时间
 void drvShowVersion(void);
 void drvCoreBoardExit(void);
+//nKeyIndex 表示某一个led，1-40有效，40表示所有的led
+void drvFlashLEDs(int nKeyIndex);  //键灯闪烁控制
 #endif
 

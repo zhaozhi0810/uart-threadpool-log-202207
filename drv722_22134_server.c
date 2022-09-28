@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-08-17 11:06:15
+* @Last Modified time: 2022-09-26 19:37:14
 */
 
 
@@ -297,6 +297,13 @@ static void answer_to_api(msgq_t *pmsgbuf)
 		case eAPI_MICCTRL_SETONOFF_CMD:  //控制底板mic_ctrl引脚的电平
 			mcu_cmd_buf[0] = eMCU_MICCTRL_SETONOFF_TYPE;  //设置所有的led pwm			
 			mcu_cmd_buf[1] = pmsgbuf->param1;   //无意义
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+		break;
+
+		//case eMCU_LEDS_FLASH_TYPE:      //led键灯闪烁控制
+		case eAPI_LEDS_FLASH_CMD:  //led键灯闪烁控制
+			mcu_cmd_buf[0] = eMCU_LEDS_FLASH_TYPE;  //设置某一个led			
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //设置某一个led
 			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
 		break;
 
