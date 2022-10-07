@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-09-26 19:37:14
+* @Last Modified time: 2022-10-07 16:47:41
 */
 
 
@@ -25,13 +25,17 @@
 #include <string.h>             // bzero
 #include <pthread.h>
 #include <semaphore.h>
-
+#include <libgen.h>
 #include <stdarg.h>
 
 #include "my_log.h"
 #include "my_ipc_msgq.h"
 #include "uart_to_mcu.h"
 #include "threadpool.h"
+//#include "drv_22134_api.h"
+#include "codec.h"
+#include "debug.h"
+#include "i2c_reg_rw.h"
 //服务端，包含串口通信，msgq通信，线程池，日志等。
 
 #define TYPE_SENDTO_API 234   //发    必须跟api是反的！！！！，不要随意改动！！！！
@@ -41,21 +45,8 @@ static const char* g_build_time_str = "Buildtime :"__DATE__" "__TIME__;   //获�
 //全局变量，数据应该保持实时刷新。
 struct threadpool* pool;  //线程池
 static pid_t api_pid = 0;
-//mcu 自己的协议 相当于把协议又翻译一次
-//
-//
-//
-// static int set_mcu_cmd(int cmd,int param1,int param2)
-// {
-// 	unsigned char mcu_cmd_buf[2];
-// 	switch(cmd)
-// 	{
-
-		
-// 	}	
-		
 	
-
+static int server_in_debug_mode = 0;   //服务端进入调试模式		
 
 // 	mcu_cmd_buf[1] = 1;  //命令对应的参数
 
@@ -80,22 +71,18 @@ static pid_t api_pid = 0;
 //ps -ef | grep drv_22134_server | grep -v grep | wc -l
 //尝试启动server进程
 //返回0表示没有该进程，非0表示存在进程了
-static int is_server_process_start(void)
+static int is_server_process_start(char * cmd_name)
 {
 	FILE *ptr = NULL;
-	char cmd[256] = "ps -ef | grep drv_22134_server | grep -v grep | wc -l";
+	char cmd[256] = "ps -ef | grep %s | grep -v grep | wc -l";
 //	int status = 0;
 	char buf[64];
 	int count;
 
-//	char name[64];
-
-	// if(get_executable_path( name, sizeof name) > 0)
-	// {
-	// 	snprintf(cmd,sizeof cmd,"ps -ef | grep %s | grep -v grep | wc -l",name);
-	// }
-
-	// printf("server:cmd = %s\n",cmd);
+//	printf("server DEBUG:cmd_name = %s\n",cmd_name);
+	snprintf(cmd,sizeof cmd,"ps -ef | grep %s | grep -v grep | wc -l",cmd_name);
+	if(server_in_debug_mode)
+		printf("ServerDEBUG: api check serverProcess is running, cmd = %s\n",cmd);
 
 	if((ptr = popen(cmd, "r")) == NULL)
 	{
@@ -110,12 +97,12 @@ static int is_server_process_start(void)
 		if(count < 2)//当进程数小于等于2时，说明进程不存在, 1表示有一个，是grep 进程的
 		{
 			pclose(ptr);
-			printf("no server process \n");
+			if(server_in_debug_mode)
+				printf("ServerDEBUG: check serverProcess: no server process,ready to start serverProcess!!\n");
 			return 0;  //系统中没有该进程	
 		}
-		// else
-		// 	system("ps -ef | grep drv_22134_server ");
-
+		if(server_in_debug_mode)
+				printf("ServerDEBUG: check serverProcess: server process is running!!\n");
 	}
 	pclose(ptr);
 	return 1;
@@ -127,34 +114,34 @@ static int is_server_process_start(void)
 
 //检查进程是否正在运行，防止运行多个进程
 //返回0表示没有该进程，-1表示存在进程了
-static int isProcessRunning()
-{
-#if 0	
-    int lock_fd = open("/tmp/drvServer22134.lock",O_CREAT|O_RDWR,0666);
-    if(lock_fd < 0)
-    {
-    	printf("ERROR: open /tmp/drvServer22134.lock\n");
-    	return -1;
-    }	
-    int rc = flock(lock_fd,LOCK_EX|LOCK_NB); //flock加锁，LOCK_EX -- 排它锁；LOCK_NB -- 非阻塞模式
-    if(rc)  //返回值非0，无法正常持锁
-    {
-        if(EWOULDBLOCK == errno)    //尝试锁住该文件的时候，发现已经被其他服务锁住,errno==EWOULDBLOCK
-        {
-        //	close(lock_fd);	
-            printf("Already Running!\n");
-            return -1; 
-        }
-    }
-//    close(lock_fd);	//不能关闭文件
-#else
-	int ret = is_server_process_start();
-//	printf("server: Process is Running ret = %d\n",ret);
-	return ret;   //返回0表示没有该进程，非0则表示有或者出错
+// static int isProcessRunning(char * cmd_name)
+// {
+// #if 0	
+//     int lock_fd = open("/tmp/drvServer22134.lock",O_CREAT|O_RDWR,0666);
+//     if(lock_fd < 0)
+//     {
+//     	printf("ERROR: open /tmp/drvServer22134.lock\n");
+//     	return -1;
+//     }	
+//     int rc = flock(lock_fd,LOCK_EX|LOCK_NB); //flock加锁，LOCK_EX -- 排它锁；LOCK_NB -- 非阻塞模式
+//     if(rc)  //返回值非0，无法正常持锁
+//     {
+//         if(EWOULDBLOCK == errno)    //尝试锁住该文件的时候，发现已经被其他服务锁住,errno==EWOULDBLOCK
+//         {
+//         //	close(lock_fd);	
+//             printf("Already Running!\n");
+//             return -1; 
+//         }
+//     }
+// //    close(lock_fd);	//不能关闭文件
+// #else
+// 	int ret = is_server_process_start();
+// //	printf("server: Process is Running ret = %d\n",ret);
+// 	return ret;   //返回0表示没有该进程，非0则表示有或者出错
     
-#endif    
-    return 0;   //成功加锁。
-}
+// #endif    
+//     return 0;   //成功加锁。
+// }
 
 
 
@@ -166,14 +153,16 @@ static int check_api_running(void)
 		return 0;
 
 	snprintf(filename,sizeof filename,"/proc/%d/exe",api_pid);
-	printf("server : check_api_running filename = %s\n",filename);
+	if(server_in_debug_mode)
+		printf("ServerDEBUG: check_api_running filename = %s\n",filename);
 
 	if(access(filename,F_OK ) != -1)
 	{
-		printf("server : check_api_running access ok\n");
+		printf("server : check_api_running,api is running\n");
 		return 1;   //进程已存在
 	}
-	printf("server : check_api_running access 0\n");
+	if(server_in_debug_mode)
+		printf("ServerDEBUG : check_api_running ,api is not running\n");
 	return 0;  //进程不存在
 }
 
@@ -191,8 +180,9 @@ static void answer_to_api(msgq_t *pmsgbuf)
 	msgbuf.ret = 0;  //ret 等于0表示不返回有效数据（只包含应答），等于1，表示有数据返回
 
 	//调试信息
-//	printf("debug:answer_to_api cmd = %d param1 = %d param2 = %d\n",
-//			pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2);
+	if(server_in_debug_mode)
+		printf("ServerDEBUG:answer_to_api:answer_to_api cmd = %d param1 = %d param2 = %d\n",
+			pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2);
 
 	//1.	解析数据
 	switch(pmsgbuf->cmd)
@@ -353,17 +343,18 @@ static void* msg_connect(void * data)
 		if(ret == 0)   //收到信息，打印出来
 		{
 			//调试打印						
-			{				
-			//	printf("type = %ld cmd = %d b = %d c = %d rt = %d\n",pmsgbuf->types,pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2,pmsgbuf->ret);
+			{	
+				if(server_in_debug_mode)			
+					printf("ServerDEBUG:msg_connect type = %ld cmd = %d b = %d c = %d rt = %d\n",pmsgbuf->types,pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2,pmsgbuf->ret);
 				threadpool_add_job(pool,api_answer_thread,pmsgbuf);
 			}
 		}
 		else
 		{
-			printf("ERROR: msgq_recv\n");
+			printf("Server ERROR: msgq_recv\n");
 			if(errno != EINTR)  //捕获到信号
 			{
-				printf("error msgq error!\n");
+				printf("Server error errno != EINTR!\n");
 			}			
 			free(pmsgbuf);   //出错的情况下由自己释放
 		}	
@@ -376,8 +367,27 @@ static void* msg_connect(void * data)
 
 
 
+#define I2C_ADAPTER_DEVICE	"/dev/i2c-4"
+#define I2C_DEVICE_ADDR		(0x11)
 
+//设置pcm音量为某个值，val范围0-192.值越大，声音越小
+static void drvSetTuneVal(int val)
+{
+	if(val>192)
+		val = 192;
+	else if(val < 0)
+		val = 0;
+	CHECK(!s_write_reg(ES8388_DACCONTROL4, val), , "Error s_write_reg!");
+	CHECK(!s_write_reg(ES8388_DACCONTROL5, val), , "Error s_write_reg!");
+}
 
+//48.设置扬声器音量值 参数范围为[0,100]，通道2的左声道
+static void drvSetSpeakVolume(int value)
+{
+	CHECK(value > 0 && value <= 100, , "Error value out of range!");
+	value = 0x21*value/100;
+	CHECK(!s_write_reg(ES8388_DACCONTROL26, value), , "Error s_write_reg!");
+}
 
 // static const char* my_opt = "vhpwb:d:";
 
@@ -387,27 +397,48 @@ int main(int argc, char *argv[])
 {
 	int t;
 	
-	printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
+	printf("%s running,%s\n",argv[0],g_build_time_str);
 
-	if(isProcessRunning())   //防止服务程序被多次运行
+	if(argc == 2)
 	{
-		printf("server : isProcessRunning return !0\n");
-		return 0;
-	}	
-
-	//转为守护进程
-	if(daemon(0,0))   //daemon 2022-08-08
-	{
-		perror("daemon");
-		return -1;
+		if(strcmp(argv[1],"-D") == 0)  //加了-D选项，则进入调试模式
+		{
+			server_in_debug_mode = 1;    //server开启调试模式
+			printf("ServerDEBUG: serverProcess enter Debug Mode!!\n");
+		}
 	}
 
+	if(is_server_process_start(basename(argv[0])))   //防止服务程序被多次运行
+	{
+		printf("ERROR : serverProcess is Running, Do not run it again!!\n");
+		return 0;
+	}
+	if(server_in_debug_mode)	
+		printf("ServerDEBUG: serverProcess is begin to Running\n");
+	//转为守护进程
+	if(!server_in_debug_mode){
+		if(daemon(0,0))   //daemon,调试模式不进入守护进程模式，
+		{
+			perror("daemon");
+			return -1;
+		}
+
+#if 1	
+		//日志记录
+	 	if(0 !=log_init())  //调试模式不记录日志，
+	 		printf("ERROR: log thread init!!");
+#endif
+	}
+	
 	//串口通信	
 	if(0 != uart_init(argc, argv))
 	{
 		printf("error:uart_init \n");
 		return -1;
 	}
+
+	if(server_in_debug_mode)	
+		printf("ServerDEBUG: serverProcess uart init ok!!!\n");
 
 		//用于通信的消息队列
 	if(0 != msgq_init())
@@ -416,22 +447,33 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-#if 1
-		//日志记录
-	 if(0 !=log_init())  //自动开了线程
-	 	printf("ERROR: log thread init!!");
-#endif
+	if(server_in_debug_mode)	
+		printf("ServerDEBUG: serverProcess uart init ok!!!\n");
+
+
+	int ret = i2c_adapter_init(I2C_ADAPTER_DEVICE, I2C_DEVICE_ADDR);
+	if(ret == 0) //不为0，表示出错！！
+	{
+		drvSetTuneVal(1);  //设置pcm音量值，0-192，值越大声音越小
+		drvSetSpeakVolume(95); //设值扬声器音量值，0-100，值越大声音越大
+		i2c_adapter_exit();
+		if(server_in_debug_mode)	
+			printf("ServerDEBUG: serverProcess Volume  set ok!!!\n");
+	}
+	else
+		printf("serverProcess: ERROR: i2c_adapter_init,Volume not set \n");
+	
+
 	//线程池初始化
 	pool = threadpool_init(4,6);  //初始有多少线程，最多有多少任务排队
 
+	if(server_in_debug_mode)	
+		printf("ServerDEBUG: serverProcess threadpool  init ok!!!\n");
 	//串口任务，独占一个线程
 	threadpool_add_job(pool,mcu_recvSerial_thread,/*&g_datas*/&t);  //串口接收,线程启动后不再退出！！！
 	
-	//热键处理，独占一个线程
-	//pthread_create(&thread, NULL, hot_key_thread, NULL);
-    //pthread_detach(thread);   //设置分离模式	
-	//threadpool_add_job(pool,hot_key_thread,&g_datas);  //串口接收,线程启动后不再退出！！！
-
+	if(server_in_debug_mode)	
+		printf("ServerDEBUG: serverProcess ready to run msg thread!!!\n");
 	//处理msg的接收信息。
 	msg_connect(NULL);   //这个线程启动后不再退出。接收msg的消息
 	

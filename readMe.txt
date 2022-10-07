@@ -81,6 +81,15 @@
 
 
 
+2022-10-07
+1.server端增加了启动选项-D，运行时，使用这个选项进入调试模式，不会成为守护进程，也不会开启日志记录。增加了一些打印信息。
+2.优化了server端的重复启动检测程序。
+3.server端启动时，设置了es8388的音频控制，让扬声器通道的音量开启较大。（使用IIC的方法）
+4.反复启动测试，目前测试均正常。
+./drv722_22134_server running,Buildtime :Oct  7 2022 16:47:50
+./drv722test running,Buildtime Buildtime :Oct  7 2022 14:45:43
+drvCoreBoardInit running,Buildtime Buildtime :Oct  7 2022 16:47:50
+
 
 
 

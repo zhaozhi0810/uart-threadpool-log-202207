@@ -63,8 +63,8 @@ start_recursive_build:
 	make -C ./ -f $(TOPDIR)/Makefile.build
 	
 # 处理最终目标，把前期处理得出的 built-in.o 用上
-drv722_22134_server : drv722_22134_server.o kmUtil_server/built-in.o msgq_api_server/built-in.o log_server/built-in.o threadpool_server/built-in.o
-	$(CC) -o $@ $^ $(LDFLAGS) -lpthread
+drv722_22134_server : drv722_22134_server.o kmUtil_server/built-in.o msgq_api_server/built-in.o audio-i2c_api/built-in.o log_server/built-in.o threadpool_server/built-in.o
+	$(CC) -o $@ $^ $(LDFLAGS) -lpthread 
 
 libdrv722_22134.so:drv722_22134_api.o linux-gpio-api/built-in.o msgq_api_server/built-in.o audio-i2c_api/built-in.o keyboard_api/built-in.o   
 	@echo "Create target " $@	

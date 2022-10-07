@@ -374,7 +374,7 @@ static void usage(char* name)
 
 
 
-static const char* my_opt = "vhpwb:d:";
+static const char* my_opt = "Dvhpwb:d:";
 
 /* This function will open the uInput device. Please make 
 sure that you have inserted the uinput.ko into kernel. */ 
@@ -432,8 +432,11 @@ int uart_init(int argc, char *argv[])
 	        case ':':
 	                fprintf(stderr, "miss option char in optstring.\n");
 	                break;
+	        case 'D':
+	        	break;
 	        case '?':
 	        case 'h':
+
 	        default:
 	                usage(argv[0]);
 	                break;

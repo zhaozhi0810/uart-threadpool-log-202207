@@ -1060,6 +1060,18 @@ void drvSetTuneUp(void)
 	CHECK(!s_write_reg(ES8388_DACCONTROL5, val), , "Error s_write_reg!");		
 }
 
+//设置pcm音量为某个值，val范围0-192.值越大，声音越小
+void drvSetTuneVal(int val)
+{
+	if(val>192)
+		val = 192;
+	else if(val < 0)
+		val = 0;
+	CHECK(!s_write_reg(ES8388_DACCONTROL4, val), , "Error s_write_reg!");
+	CHECK(!s_write_reg(ES8388_DACCONTROL5, val), , "Error s_write_reg!");
+}
+
+
 //45.反向调节音量，pcm调节
 void drvSetTuneDown(void)
 {

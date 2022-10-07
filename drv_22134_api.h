@@ -185,5 +185,9 @@ void drvShowVersion(void);
 void drvCoreBoardExit(void);
 //nKeyIndex 表示某一个led，1-40有效，40表示所有的led
 void drvFlashLEDs(int nKeyIndex);  //键灯闪烁控制
+
+//设置pcm音量为某个值，val范围0-192.值越大，声音越小
+void drvSetTuneVal(int val);
+
 #endif
 
