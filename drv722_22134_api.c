@@ -88,7 +88,7 @@ static int CoreBoardInit = 0;   //初始化了吗？初始化成功为1，失败
 static int KeyboardTypepins[3]={-1,-1,-1};  //用于键盘识别的
 
 
-static int lock_fd = -1;
+//static int lock_fd = -1;
 //int atexit(void (*function)(void));
 //进程正常结束时关闭文件
 static void at_exit_close_file(void)
@@ -318,7 +318,7 @@ int drvCoreBoardInit(void)
 	if(CoreBoardInit == 1)  //已经初始化了
 		return 0;
 
-	printf("drvCoreBoardInit running,Buildtime %s\n",g_build_time_str);
+	printf("libdrv722_22134.so is running, %s\n",g_build_time_str);
 
 	start_server_process();
 	atexit(at_exit_close_file); //注册一个退出函数
@@ -361,7 +361,6 @@ int drvCoreBoardInit(void)
 		CoreBoardInit = -1;   //记录初始化失败
 		return ret;
 	}
-
 	CoreBoardInit = 1;  //初始化成功
 	return 0;
 }
@@ -385,13 +384,11 @@ void drvCoreBoardExit(void)
 	msgq_exit();  //清除消息队列中的消息
 	CoreBoardInit = 0;   //未初始化了！！！
 
-	if(lock_fd >= 0)   //文件被打开，则关闭
-	{
-		close(lock_fd);
-		lock_fd = -1;
-	}	
-
-
+	// if(lock_fd >= 0)   //文件被打开，则关闭
+	// {
+	// 	close(lock_fd);
+	// 	lock_fd = -1;
+	// }	
 	exited = 1;   //已经执行过该函数
 	return;
 }

@@ -22,6 +22,7 @@ SUBDIRS=$(shell ls -l | grep ^d | awk '{if($$9 != "test") print $$9}')
 # 因为在根目录下存在一个 log 文件夹，此文件只为了放置日志文件，并不需要参与编译
 SUBDIRS:=$(patsubst log,,$(SUBDIRS))
 SUBDIRS:=$(patsubst test-key_led-2022-0926,,$(SUBDIRS))
+SUBDIRS:=$(patsubst test-2022-10-08,,$(SUBDIRS))
 SUBDIRS:=$(patsubst mixer_scontrols_app,,$(SUBDIRS))
 
 
@@ -67,8 +68,8 @@ drv722_22134_server : drv722_22134_server.o kmUtil_server/built-in.o msgq_api_se
 	$(CC) -o $@ $^ $(LDFLAGS) -lpthread 
 
 libdrv722_22134.so:drv722_22134_api.o linux-gpio-api/built-in.o msgq_api_server/built-in.o audio-i2c_api/built-in.o keyboard_api/built-in.o   
-	@echo "Create target " $@	
-	@$(CC) $^ -o $@ -fPIC -shared 
+	@echo "Create target " $@ 
+	@$(CC) $^ -o $@ -fPIC -shared -lpthread
 	
 # 清理
 clean:

@@ -92,6 +92,11 @@ drvCoreBoardInit running,Buildtime Buildtime :Oct  7 2022 16:47:50
 
 
 
+2022-10-08
+1. 优化test目录中测试程序，使用中文菜单提示模式。
+2. 调整了msgq的入口参数判断，对空指针进行错误判断。
+
+
 
 
 
