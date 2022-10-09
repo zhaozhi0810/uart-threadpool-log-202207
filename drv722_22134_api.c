@@ -31,10 +31,10 @@
 #include "keyboard.h"
 //#include "drv_gpio_input_event.h"   //ptt事件的处理
 /*
-	与串口通信部分，使用msgq的方式，发送id为678，接收id为234
+	与串口通信部分，使用Jc_msgq的方式，发送id为678，接收id为234
 
  */
-#define TYPE_API_SENDTO_SERVER 678   //发 改到msgq.c中去了
+#define TYPE_API_SENDTO_SERVER 678   //发 改到Jc_msgq.c中去了
 #define TYPE_API_RECFROM_SERVER 234
 
 
@@ -131,13 +131,13 @@ int api_send_and_waitack(int cmd,int param1,int *param2)
 	msgbuf.ret = 0;   //一般没有使用
 //	printf("DEBUG: cmd = %d\n",cmd);
 	//3.做出应答
-	ret = msgq_send(TYPE_API_RECFROM_SERVER+cmd,&msgbuf,20); //数据发出后，需要等待 20表示1s
+	ret = Jc_msgq_send(TYPE_API_RECFROM_SERVER+cmd,&msgbuf,20); //数据发出后，需要等待 20表示1s
 	if(0!= ret)
 	{		
-		printf("error : msgq_send ,ret = %d\n",ret);
+		printf("error : Jc_msgq_send ,ret = %d\n",ret);
 		return ret;
 	} 
-//	printf("DEBUG: msgq_send ok\n");
+//	printf("DEBUG: Jc_msgq_send ok\n");
 	//判断是否有返回数据
 	if(param2 && (msgbuf.ret>0))  //ret >0 表示有数据回来,小于0表示出错，等于0表示应答
 		*param2 = msgbuf.param1;   //用param1返回数据
@@ -290,7 +290,7 @@ static int isProcessRunning()
 //    close(lock_fd);	//不能关闭文件   
     return 0;   //成功加锁。
 #else
-    //2022-08-09改为msgq通信确认进程是否存在，发送pid过去
+    //2022-08-09改为Jc_msgq通信确认进程是否存在，发送pid过去
     pid_t pid;
     int ret = 0;   //参数需要一个指针，返回函数返回值
     pid = getpid();  //获得自己的pid
@@ -323,10 +323,10 @@ int drvCoreBoardInit(void)
 	start_server_process();
 	atexit(at_exit_close_file); //注册一个退出函数
 	
-	ret = msgq_init();
+	ret = Jc_msgq_init();
 	if(ret)  //不为0，表示出错！！
 	{
-		DBG_PRINTF("ERROR: msgq_init ret = %d\n",ret);
+		DBG_PRINTF("ERROR: Jc_msgq_init ret = %d\n",ret);
 		CoreBoardInit = -1;   //记录初始化失败
 		return ret;
 	}
@@ -381,7 +381,7 @@ void drvCoreBoardExit(void)
 	gpio_direction_unset(KeyboardTypepins[1]);
 	gpio_direction_unset(KeyboardTypepins[2]);
 
-	msgq_exit();  //清除消息队列中的消息
+	Jc_msgq_exit();  //清除消息队列中的消息
 	CoreBoardInit = 0;   //未初始化了！！！
 
 	// if(lock_fd >= 0)   //文件被打开，则关闭

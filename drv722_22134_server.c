@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-10-07 16:47:41
+* @Last Modified time: 2022-10-09 11:49:50
 */
 
 
@@ -36,7 +36,7 @@
 #include "codec.h"
 #include "debug.h"
 #include "i2c_reg_rw.h"
-//服务端，包含串口通信，msgq通信，线程池，日志等。
+//服务端，包含串口通信，Jc_msgq通信，线程池，日志等。
 
 #define TYPE_SENDTO_API 234   //发    必须跟api是反的！！！！，不要随意改动！！！！
 #define TYPE_RECVFROM_API 678   //收
@@ -304,8 +304,8 @@ static void answer_to_api(msgq_t *pmsgbuf)
 	}	
 
 	//3.做出应答给API
-	if(0!= msgq_send_ack(&msgbuf))   //应答发出后，不需要等待
-		printf("error : msgq_send\n");
+	if(0!= Jc_msgq_send_ack(&msgbuf))   //应答发出后，不需要等待
+		printf("error : Jc_msgq_send\n");
 }
 
 
@@ -339,7 +339,7 @@ static void* msg_connect(void * data)
 			sleep(1);  //等待1s继续
 			continue;
 		}
-		ret = msgq_recv(TYPE_RECVFROM_API,pmsgbuf,0);  //阻塞试接收，消息类型都是同一种
+		ret = Jc_msgq_recv(TYPE_RECVFROM_API,pmsgbuf,0);  //阻塞试接收，消息类型都是同一种
 		if(ret == 0)   //收到信息，打印出来
 		{
 			//调试打印						
@@ -351,7 +351,7 @@ static void* msg_connect(void * data)
 		}
 		else
 		{
-			printf("Server ERROR: msgq_recv\n");
+			printf("Server ERROR: Jc_msgq_recv\n");
 			if(errno != EINTR)  //捕获到信号
 			{
 				printf("Server error errno != EINTR!\n");
@@ -441,9 +441,9 @@ int main(int argc, char *argv[])
 		printf("ServerDEBUG: serverProcess uart init ok!!!\n");
 
 		//用于通信的消息队列
-	if(0 != msgq_init())
+	if(0 != Jc_msgq_init())
 	{
-		printf("error : msgq_init\n");
+		printf("error : Jc_msgq_init\n");
 		return -1;
 	}
 

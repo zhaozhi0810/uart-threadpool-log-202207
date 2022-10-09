@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 09:57:14
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-10-08 10:07:46
+* @Last Modified time: 2022-10-09 12:14:14
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +42,7 @@ static int MsgClear(void)
 
 
 //返回值0表示成功，其他表示失败
-int msgq_init(void)
+int Jc_msgq_init(void)
 {
 	key_t key;
     
@@ -76,7 +76,7 @@ int msgq_init(void)
 
 
 //返回值0表示成功，其他表示失败
-int msgq_exit(void)
+int Jc_msgq_exit(void)
 {
 	MsgClear();   //清楚消息队列中的消息
 	return 0;
@@ -88,7 +88,7 @@ int msgq_exit(void)
 //     types 接收消息的类型
 //     msgbuf 接收消息的缓存，1次接收一条消息
 //返回0表示成功，其他表示失败
-int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
+int Jc_msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
 {
 	int recv_flg = 0;	
 	int ret;
@@ -150,7 +150,7 @@ int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
 //     msgbuf 发送消息的缓存，1次发送一条消息
 //返回0表示成功，其他表示失败
 //注意，函数使用时，需要指定msgbuf->types ！！！！
-int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
+int Jc_msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
 {
 	int ret = -EBUSY;  //初始值
 //	int cmd = msgbuf->cmd;
@@ -174,7 +174,7 @@ int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
     {
     //	printf("debug:msgsnd ok \n");
     	//等待应答，等待的类型跟命令有关！！！！！
-    	ret =  msgq_recv(ack_types,msgbuf,timeout);
+    	ret =  Jc_msgq_recv(ack_types,msgbuf,timeout);
     	if(ret == 0)    //正常在这返回0，仍然可能不是0. 
     	{
     //		printf("msgq_send and recv ok!!msgbuf.ret = %d\n",msgbuf->ret);
@@ -192,7 +192,7 @@ int msgq_send(long ack_types,msgq_t *msgbuf,int timeout)
 
 
 //发送应答消息消息，不等待应答。
-int msgq_send_ack(msgq_t *msgbuf)
+int Jc_msgq_send_ack(msgq_t *msgbuf)
 {
 	if(msgbuf == NULL){
 		printf("send_ack error,msgbuf == NULL!!!\n");

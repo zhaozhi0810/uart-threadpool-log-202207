@@ -52,18 +52,18 @@ enum API_CMD_types{
 
 
 //返回值0表示成功，其他表示失败
-int msgq_init(void);
+int Jc_msgq_init(void);
 
 
 //返回值0表示成功，其他表示失败
-int msgq_exit(void);
+int Jc_msgq_exit(void);
 
 //接收消息
 //参数 timeout_50ms 大于0时，表示非阻塞模式，等待的时间为timeout_50ms*50ms的值，等于0表示阻塞模式
 //     types 接收消息的类型
 //     msgbuf 接收消息的缓存，1次接收一条消息
 //返回0表示成功，其他表示失败
-int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms);
+int Jc_msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms);
 
 
 
@@ -73,11 +73,11 @@ int msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms);
 //     msgbuf 发送消息的缓存，1次发送一条消息
 //返回0表示成功，其他表示失败
 //注意，函数使用时，需要指定msgbuf->types ！！！！
-int msgq_send(long ack_types,msgq_t *msgbuf,int timeout);
+int Jc_msgq_send(long ack_types,msgq_t *msgbuf,int timeout);
 
 
 //发送应答消息消息，不等待应答。
-int msgq_send_ack(msgq_t *msgbuf);
+int Jc_msgq_send_ack(msgq_t *msgbuf);
 
 
 

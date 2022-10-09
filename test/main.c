@@ -110,12 +110,19 @@ static void *s_watchdog_feed_thread(void *param) {
 static int get_stdin_a_num(void)
 {
 	char buf[32];
+	int i;
 
-	if(fgets(buf,sizeof buf,stdin))
+	while(fgets(buf,sizeof buf,stdin))
 	{
-		if(buf[0]>='0' && buf[0] <= '9')
-			return atoi(buf);
-		else
+		i = 0;
+		buf[31] = '\0';
+		while((buf[i] == ' ') || (buf[i] == '\t'))   //去除输入的空格
+			i++;
+		if(buf[i]>='0' && buf[i] <= '9')
+			return atoi(buf+i);
+		else if(buf[i] =='\n')   //对回车则继续
+			continue;
+		else   //输入了非数字开头
 			return -1;
 	}	
 	return -1;
@@ -324,8 +331,8 @@ static int temperature_rtc_menu_control(void)
 			case 4:     //4. 设置RTC
 				secs = 0;
 				INFO("Please input RTC seconds:");
-				if(scanf("%ld", &secs) != 1) {
-					ERR("Error scanf with %d: %s\n", errno, strerror(errno));
+				if((secs = get_stdin_a_num()) == -1) {//if(scanf("%ld", &secs) != 1) {
+					ERR("您的输入有误，请重新输入\n");
 					continue;
 				}
 				if(drvSetRTC(secs) == EXIT_FAILURE) {
@@ -386,8 +393,8 @@ static int key_lights_menu_control(void)
 				break;
 			case 2:      //2. 设置对应键灯点亮
 				INFO("Please input KeyIndex: (%u-%u)", KEY_VALUE_MIN, KEY_VALUE_MAX);
-				if(scanf("%d", &KeyIndex) != 1) {
-					ERR("Error scanf with %d: %s", errno, strerror(errno));
+				if((KeyIndex = get_stdin_a_num()) == -1) {//if(scanf("%d", &KeyIndex) != 1) {
+					ERR("您的输入有误，请重新输入\n");
 					continue;
 				}
 				if(KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX){
@@ -398,8 +405,8 @@ static int key_lights_menu_control(void)
 				break;
 			case 3:     //3. 设置对应键灯熄灭
 				INFO("Please input KeyIndex: (%u-%u)", KEY_VALUE_MIN, KEY_VALUE_MAX);
-				if(scanf("%d", &KeyIndex) != 1) {
-					ERR("Error scanf with %d: %s", errno, strerror(errno));
+				if((KeyIndex = get_stdin_a_num()) == -1) {//if(scanf("%d", &KeyIndex) != 1) {
+					ERR("您的输入有误，请重新输入\n");
 					continue;
 				}
 				if(KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX){
@@ -413,8 +420,8 @@ static int key_lights_menu_control(void)
 				break;
 			case 5:  //5. 设置键灯闪烁
 				INFO("Please input KeyIndex: (%u-%u)", KEY_VALUE_MIN, KEY_VALUE_MAX);
-				if(scanf("%d", &KeyIndex) != 1) {
-					ERR("Error scanf with %d: %s", errno, strerror(errno));
+				if((KeyIndex = get_stdin_a_num()) == -1) {//if(scanf("%d", &KeyIndex) != 1) {
+					ERR("您的输入有误，请重新输入\n");
 					continue;
 				}
 				if(KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX){
@@ -426,8 +433,8 @@ static int key_lights_menu_control(void)
 			case 6:  //6. 设置键灯亮度
 				nBrtVal = 0;
 				INFO("Please input brightness: (%u-%u)\n", PANEL_KEY_BRIGHTNESS_MIN, PANEL_KEY_BRIGHTNESS_MAX);
-				if(scanf("%d", &nBrtVal) != 1) {
-					ERR("Error scanf with %d: %s\n", errno, strerror(errno));
+				if((KeyIndex = get_stdin_a_num()) == -1) {//if(scanf("%d", &nBrtVal) != 1) {
+					ERR("您的输入有误，请重新输入\n");
 					continue;
 				}
 				if(nBrtVal > PANEL_KEY_BRIGHTNESS_MAX || nBrtVal < PANEL_KEY_BRIGHTNESS_MIN) {
@@ -515,8 +522,8 @@ static int Watchdog_menu_control(void)
 			case 3:     //3. 设置看门狗超时时间
 				timeout = 0;
 				INFO("Please input TIMEOUT[1-250]:");
-				if(scanf("%d", &timeout) != 1) {
-					ERR("Error scanf with %d: %s\n", errno, strerror(errno));
+				if((timeout = get_stdin_a_num()) == -1) {//if(scanf("%d", &timeout) != 1) {
+					ERR("您的输入有误，请重新输入\n");
 					continue;
 				}
 				//对取值进行合法设置
@@ -595,8 +602,8 @@ static int LCDmisc_menu_control(void)
 			case 3:     //3. 调节屏幕亮度
 				nBrtVal = 0;
 				INFO("Please input brightness: (%u-%u)\n", SCREEN_BRIGHTNESS_MIN, SCREEN_BRIGHTNESS_MAX);
-				if(scanf("%d", &nBrtVal) != 1) {
-					ERR("Error scanf with %d: %s\n", errno, strerror(errno));
+				if((nBrtVal = get_stdin_a_num()) == -1) {//if(scanf("%d", &nBrtVal) != 1) {
+					ERR("您的输入有误，请重新输入\n");
 					continue;
 				}
 				if(nBrtVal > SCREEN_BRIGHTNESS_MAX || nBrtVal < SCREEN_BRIGHTNESS_MIN) {
@@ -765,6 +772,7 @@ static void s_show_usage(void) {
 
 static void s_sighandler(int signum) {
 	INFO("Receive signal %d, program will be exit!\n", signum);
+	s_main_thread_exit = 1;
 }
 
 static int s_signal_init(void) {
