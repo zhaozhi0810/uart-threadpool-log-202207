@@ -16,7 +16,7 @@
 #include "debug.h"
 
 static int inited = -1;   //初始化了么 1表示初始化了 
-static int i2c_adapter_fd = 0;  //文件描述符
+static int i2c_adapter_fd = -1;  //文件描述符
 
 int i2c_adapter_init(char *i2c_adapter_file, int i2c_device_addr) {
 	if(inited == 1)
@@ -39,7 +39,10 @@ int i2c_adapter_init(char *i2c_adapter_file, int i2c_device_addr) {
 }
 
 int i2c_adapter_exit(void) {
-	 CHECK(i2c_adapter_fd > 0, -1, "Error i2c_adapter_fd is %d", i2c_adapter_fd);
+	// CHECK(i2c_adapter_fd > 0, -1, "Error i2c_adapter_fd is %d", i2c_adapter_fd);
+	// CHECK(i2c_adapter_fd > 0, -1, "\n");
+	 if(i2c_adapter_fd <= 0)
+	 	return -1;
 	 CHECK(!close(i2c_adapter_fd), -1, "Error close with %d: %s", errno, strerror(errno));
 	return 0;
 }

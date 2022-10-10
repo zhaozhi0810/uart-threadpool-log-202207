@@ -75,7 +75,7 @@ static void *s_recv_event_thread(void *arg) {
 				continue;
 			}
 			if(ts.type == EV_KEY) {	
-				INFO("panel : Key %#x, value %#x", ts.code, ts.value);
+			//	INFO("panel : Key %#x, value %#x", ts.code, ts.value);
 			//	printf("KEY_P = %d\n",KEY_P);
 				if((ts.code == KEY_P) && s_gpio_notify_func){  //对PTT按键特殊处理一下！！					
 					s_gpio_notify_func(ts.code, ts.value);					
@@ -175,7 +175,7 @@ static int get_event_dev(char *name) {
 
 static int gpio_event_init(void) {	
 	int input_device_num = 0;
-	INFO("Enter %s", __func__);
+//	INFO("Enter %s", __func__);
 	CHECK((input_device_num = get_event_dev("gpio-keys")) >= 0, -1, "Error s_get_event_dev!");
 	snprintf(gpio_event_dev, sizeof(gpio_event_dev), "/dev/input/event%d", input_device_num);
 	return 0;
@@ -190,7 +190,7 @@ int keyboard_init(void) {
 
 	//memset(&s_keyboard_info, -1, sizeof(KEYBOARD_INFO_S));
 	CHECK((input_device_num = get_event_dev(JC_KEYBOARD_DRIVER_NAME)) >= 0, -1, "Error get_event_dev! \nPlease make sure drvserver is running!!\n");
-	printf("debug : input_device_num = %d\n",input_device_num);
+//	printf("debug : input_device_num = %d\n",input_device_num);
 	snprintf(event_dev_name, sizeof(event_dev_name), "/dev/input/event%d", input_device_num);
 //	snprintf(s_keyboard_info.keyboard_dev_name, sizeof(s_keyboard_info.keyboard_dev_name), "/dev/%s", JC_KEYBOARD_DRIVER_NAME);
 	CHECK(!pthread_create(&s_recv_key_event_thread_id, NULL, s_recv_event_thread, NULL), -1, "Error pthread_create with %d: %s", errno, strerror(errno));

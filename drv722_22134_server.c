@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-10-09 11:49:50
+* @Last Modified time: 2022-10-10 17:06:40
 */
 
 
@@ -181,7 +181,7 @@ static void answer_to_api(msgq_t *pmsgbuf)
 
 	//调试信息
 	if(server_in_debug_mode)
-		printf("ServerDEBUG:answer_to_api:answer_to_api cmd = %d param1 = %d param2 = %d\n",
+		printf("ServerDEBUG:answer_to_api---> cmd = %d param1 = %d param2 = %d\n",
 			pmsgbuf->cmd,pmsgbuf->param1,pmsgbuf->param2);
 
 	//1.	解析数据

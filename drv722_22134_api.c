@@ -93,7 +93,7 @@ static int KeyboardTypepins[3]={-1,-1,-1};  //用于键盘识别的
 //进程正常结束时关闭文件
 static void at_exit_close_file(void)
 { 	
-	printf("at_exit_close_file\n");
+//	printf("at_exit_close_file\n");
 	drvCoreBoardExit();  //函数中处理了防止多次执行
 }
 
@@ -180,7 +180,7 @@ static int getKeyboardTypePinInit(void)
 	KeyboardTypepins[1] = get_pin(RK_GPIO2,RK_PD2);
 	KeyboardTypepins[2] = get_pin(RK_GPIO4,RK_PC7);
 
-	printf("debug: pins = %d %d %d\n",KeyboardTypepins[0],KeyboardTypepins[1],KeyboardTypepins[2]);
+//	printf("debug: pins = %d %d %d\n",KeyboardTypepins[0],KeyboardTypepins[1],KeyboardTypepins[2]);
 
 
 	if(gpio_direction_set(KeyboardTypepins[0], GPIO_DIR_IN) == false)
@@ -333,7 +333,7 @@ int drvCoreBoardInit(void)
 	
 	if(isProcessRunning())   //防止程序被多次运行
 	{
-		printf("API:isProcessRunning return !0\n");
+		printf("API ERROR:drvCoreBoardInit Process is Running by someone,Do not allow this program to continue!!!!\n");
 		exit(-1);   //结束进程
 	}
 
@@ -658,7 +658,7 @@ int getKeyboardType(void)
 
 	result |= (level[0] == GPIO_LEVEL_HIGH)?1:0;
 	result |= (level[1] == GPIO_LEVEL_HIGH)?2:0;
-	result |= (level[1] == GPIO_LEVEL_HIGH)?4:0;
+	result |= (level[2] == GPIO_LEVEL_HIGH)?4:0;
 
 	return result;
 }

@@ -433,11 +433,11 @@ static int key_lights_menu_control(void)
 			case 6:  //6. 设置键灯亮度
 				nBrtVal = 0;
 				INFO("Please input brightness: (%u-%u)\n", PANEL_KEY_BRIGHTNESS_MIN, PANEL_KEY_BRIGHTNESS_MAX);
-				if((KeyIndex = get_stdin_a_num()) == -1) {//if(scanf("%d", &nBrtVal) != 1) {
+				if((nBrtVal = get_stdin_a_num()) == -1) {//if(scanf("%d", &nBrtVal) != 1) {
 					ERR("您的输入有误，请重新输入\n");
 					continue;
 				}
-				if(nBrtVal > PANEL_KEY_BRIGHTNESS_MAX || nBrtVal < PANEL_KEY_BRIGHTNESS_MIN) {
+				if(nBrtVal > 100 || nBrtVal < 0) {
 					ERR("Error brightness out of range!");
 					break;
 				}

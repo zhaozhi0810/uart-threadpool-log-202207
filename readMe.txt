@@ -103,8 +103,8 @@ drvCoreBoardInit running,Buildtime Buildtime :Oct  7 2022 16:47:50
 3.完成test中文菜单提示的修改和测试。目前运行正常。
 
 
-
-
+2022-10-10
+1.test设置中led亮度bug修改
 
 
 
