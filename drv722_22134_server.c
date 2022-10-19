@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-10-10 17:06:40
+* @Last Modified time: 2022-10-18 19:52:55
 */
 
 
@@ -272,7 +272,7 @@ static void answer_to_api(msgq_t *pmsgbuf)
 		break;
 		case eAPI_RESET_COREBOARD_CMD:  //复位核心板
 			mcu_cmd_buf[0] = eMCU_RESET_COREBOARD_TYPE;  //设置所有的led pwm			
-		//	mcu_cmd_buf[1] = pmsgbuf->param1;   //无意义
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //无意义
 			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
 			break;
 		case eAPI_RESET_LCD_CMD:        //复位lcd 9211（复位引脚没有连通）
@@ -456,6 +456,82 @@ int main(int argc, char *argv[])
 	{
 		drvSetTuneVal(1);  //设置pcm音量值，0-192，值越大声音越小
 		drvSetSpeakVolume(95); //设值扬声器音量值，0-100，值越大声音越大
+
+#if 1		
+		s_write_reg(0x3, 0xff);  //power off adc
+		s_write_reg(0x9, 0x11);   //0x88这个就是最大值
+		s_write_reg(0x26, 0x12);  
+		s_write_reg(0x27, 0xb8);
+		s_write_reg(0x2a, 0xb8);
+		s_write_reg(0x12, 0xea);   //ALC OFF
+		s_write_reg(0x13, 0xc0);
+		s_write_reg(0x14, 0x12);
+		s_write_reg(0x15, 0x06);
+		s_write_reg(0x16, 0xc3);
+		s_write_reg(0x04, 0xc0);  
+		s_write_reg(0x3, 0x09);  //power up adc
+#else
+		s_write_reg(ES8388_MASTERMODE, 0x00);
+		// Power down DEM and STM
+		s_write_reg(ES8388_CHIPPOWER, 0xFF);
+		// Set same LRCK	Set same LRCK
+		s_write_reg(ES8388_DACCONTROL21, 0x80);
+		// Set Chip to Play&Record Mode
+		s_write_reg(ES8388_CONTROL1, 0x05);
+		// Power Up Analog and Ibias
+		s_write_reg(ES8388_CONTROL2, 0x40);
+
+		/* ADC setting */
+		// Micbias for Record
+		s_write_reg(ES8388_ADCPOWER, 0x00);
+		// Enable Lin1/Rin1 (0x00 0x00) for Lin2/Rin2 (0x50 0x80)
+		s_write_reg(ES8388_ADCCONTROL2, 0x50);
+		s_write_reg(ES8388_ADCCONTROL3, 0x80);
+		// PGA gain (0x88 - 24db) (0x77 - 21db)
+		s_write_reg(ES8388_ADCCONTROL1, 0x77);
+		// SFI setting (i2s mode/16 bit)
+		s_write_reg(ES8388_ADCCONTROL4, 0x0C);
+		// ADC MCLK/LCRK ratio (256)
+		s_write_reg(ES8388_ADCCONTROL5, 0x02);
+		// set ADC digital volume
+		s_write_reg(ES8388_ADCCONTROL8, 0x00);
+		s_write_reg(ES8388_ADCCONTROL9, 0x00);
+		// recommended ALC setting for VOICE refer to ES8388 MANUAL
+		s_write_reg(ES8388_ADCCONTROL10, 0xEA);
+		s_write_reg(ES8388_ADCCONTROL11, 0xC0);
+		s_write_reg(ES8388_ADCCONTROL12, 0x12);
+		s_write_reg(ES8388_ADCCONTROL13, 0x06);
+		s_write_reg(ES8388_ADCCONTROL14, 0xC3);
+
+		/* DAC setting */
+		// Power Up DAC& enable Lout/Rout
+		s_write_reg(ES8388_DACPOWER, 0x3C);
+		// SFI setting (i2s mode/16 bit)
+		s_write_reg(ES8388_DACCONTROL1, 0x18);
+		// DAC MCLK/LCRK ratio (256)
+		s_write_reg(ES8388_DACCONTROL2, 0x02);
+		// unmute codec
+		s_write_reg(ES8388_DACCONTROL3, 0x00);
+		// set DAC digital volume
+		s_write_reg(ES8388_DACCONTROL4, 0x00);
+		s_write_reg(ES8388_DACCONTROL5, 0x00);
+		// Setup Mixer
+		// (reg[16] 1B mic Amp, 0x09 direct;[reg 17-20] 0x90 DAC, 0x50 Mic Amp)
+		s_write_reg(ES8388_DACCONTROL16, 0x09);
+		s_write_reg(ES8388_DACCONTROL17, 0x50);
+		s_write_reg(ES8388_DACCONTROL18, 0x38);  //??
+		s_write_reg(ES8388_DACCONTROL19, 0x38);  //??
+		s_write_reg(ES8388_DACCONTROL20, 0x50);
+		// set Lout/Rout Volume -45db
+		s_write_reg(ES8388_DACCONTROL24, 0x00);
+		s_write_reg(ES8388_DACCONTROL25, 0x00);
+		s_write_reg(ES8388_DACCONTROL26, 0x00);
+		s_write_reg(ES8388_DACCONTROL27, 0x00);
+
+		/* Power up DEM and STM */
+		s_write_reg(ES8388_CHIPPOWER, 0x00);
+#endif
+		
 		i2c_adapter_exit();
 		if(server_in_debug_mode)	
 			printf("ServerDEBUG: serverProcess Volume  set ok!!!\n");

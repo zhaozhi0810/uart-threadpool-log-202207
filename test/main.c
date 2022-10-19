@@ -428,7 +428,12 @@ static int key_lights_menu_control(void)
 					ERR("Error KeyIndex<KEY_VALUE_MIN || KeyIndex > KEY_VALUE_MAX");
 					continue;
 				}
-				drvFlashLEDs(KeyIndex);
+				INFO("Please input Flash_type(0:500ms,1:800ms,2:1s:3:2s): ");
+				if((nBrtVal = get_stdin_a_num()) == -1) {//if(scanf("%d", &KeyIndex) != 1) {
+					ERR("您的输入有误，请重新输入\n");
+					continue;
+				}
+				drvFlashLEDs(KeyIndex,nBrtVal);
 				break;
 			case 6:  //6. 设置键灯亮度
 				nBrtVal = 0;

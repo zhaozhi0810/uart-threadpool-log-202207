@@ -1261,6 +1261,7 @@ void drvSelectHandFreeMic(void)
 	CHECK(!s_read_reg(ES8388_ADCCONTROL2, &val), , "Error s_read_reg!");
 	val &= 0x0f;
 	CHECK(!s_write_reg(ES8388_ADCCONTROL2, val), , "Error s_write_reg!");
+//	CHECK(!s_write_reg(ES8388_ADCCONTROL1, 0x33), , "Error s_write_reg!");
 }
 
 //60.选择手柄麦克风语音输入，输入通道2
@@ -1271,6 +1272,7 @@ void drvSelectHandMic(void)
 	val &= 0x0f;
 	val |= 0x50;
 	CHECK(!s_write_reg(ES8388_ADCCONTROL2, val), , "Error s_write_reg!");
+//	CHECK(!s_write_reg(ES8388_ADCCONTROL1, 0x33), , "Error s_write_reg!");
 }
 
 //61.选择耳机麦克风语音输入，输入通道2
@@ -1309,16 +1311,32 @@ void api_handptt_change(int status)
 }
 
 
-//键灯led闪烁接口 (1-40)
-void drvFlashLEDs(int nKeyIndex)
+//键灯led闪烁接口 (nKeyIndex：1-40)
+//闪烁类型（0：500ms,1:800ms,2:1s:3:2s）
+void drvFlashLEDs(int nKeyIndex,unsigned char flash_type)
 {
 	int param = 1;
 	if(assert_init())  //未初始化
 		return;
 
+	if(nKeyIndex > 40 || nKeyIndex < 1)
+	{
+		printf("error : drvFlashLEDs ,nKeyIndex = %d,out of range\n",nKeyIndex);
+		return;
+	}	
+
+	if(flash_type > 3)
+	{
+		flash_type = 0;
+	}
+
+	nKeyIndex = (flash_type << 6) | (nKeyIndex & 0x3f);
+
 	if(api_send_and_waitack(eAPI_LEDS_FLASH_CMD,nKeyIndex,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
 	{
-		printf("error : drvLightLED ,nKeyIndex = %d\n",nKeyIndex);
+		printf("error : drvFlashLEDs ,nKeyIndex = %d\n",nKeyIndex);
 	}
 
 }
+
+

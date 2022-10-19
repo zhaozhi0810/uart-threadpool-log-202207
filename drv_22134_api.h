@@ -184,7 +184,9 @@ void drvSelectEarphMic(void);
 void drvShowVersion(void);
 void drvCoreBoardExit(void);
 //nKeyIndex 表示某一个led，1-40有效，40表示所有的led
-void drvFlashLEDs(int nKeyIndex);  //键灯闪烁控制
+//键灯led闪烁接口 (nKeyIndex：1-40)
+//闪烁类型（0：500ms,1:800ms,2:1s:3:2s）
+void drvFlashLEDs(int nKeyIndex,unsigned char flash_type);
 
 //设置pcm音量为某个值，val范围0-192.值越大，声音越小
 void drvSetTuneVal(int val);
