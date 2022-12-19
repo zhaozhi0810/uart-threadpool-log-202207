@@ -154,7 +154,7 @@ int es8388_find_iic_devaddr(void)
 		//总线号也是可以找到的，这里就没有去识别总线号了
 		else if(strncmp(file->d_name,"4-00",4) == 0)
 		{
-			printf("name = %s",file->d_name);
+			printf("name = %s\n",file->d_name);
 			addr = strtol(file->d_name+4, NULL, 16);
 			printf("addr = %#x\n",addr);
 			closedir(dir);

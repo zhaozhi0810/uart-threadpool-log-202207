@@ -25,6 +25,9 @@
 //#include "queue.h"
 #include "uart_to_mcu.h"
 #include "uinput_dev.h"
+#include "uart_ipc_msgq.h"  //用于 串口程序内部通信的！！
+
+
 //#include "Common.h"
 
 /*global defines*/
@@ -66,6 +69,7 @@ static volatile	unsigned short uart_recv_flag = 0;   //串口收到单片机数�
 //串口数据接收处理
 static void com_message_handle(unsigned char* com_recv_data)
 {		
+	uart_msgq_t msgbuf;
 	if(com_recv_data[1]>0 && com_recv_data[1] < 37)   //按键上报
 	{
 		printf("key = %d %s\n",com_recv_data[1],com_recv_data[2]?"press":"release");
@@ -94,10 +98,13 @@ static void com_message_handle(unsigned char* com_recv_data)
 			case eMCU_LSPK_SETONOFF_TYPE: //LSPK,2022-11-11 1.3新版增加
 			case eMCU_V12_CTL_SETONOFF_TYPE:   //V12_CTL,2022-11-14 1.3新版增加
 			case eMCU_GET_LCDTYPE_TYPE:  //,   上位机获得LCD类型的接口，之前是在3399，现在改为单片机实现，2022-12-12
-				uart_recv_flag = com_recv_data[1] | (com_recv_data[2] <<8);  //¸ß8Î»±íÊ¾×´Ì¬		
+				msgbuf.types = com_recv_data[1];  //这个是命令
+				msgbuf.param = com_recv_data[2];  //这个是数据
+				//uart_recv_flag = com_recv_data[1] | (com_recv_data[2] <<8);  //¸ß8Î»±íÊ¾×´Ì¬		
+				Jc_uart_msgq_send_nowait(&msgbuf);  //把消息发出去
 				break;
 			default:
-				uart_recv_flag = 0;
+				//uart_recv_flag = 0;
 				printf("ERROR:unknown uart recv\n");
 				printf("com_recv_data[1] = %d com_recv_data[2] = %d\n",com_recv_data[1],com_recv_data[2]);
 			break;
@@ -300,12 +307,13 @@ void* mcu_recvSerial_thread(void* arg)
 /*
  * 通过串口发送数据
  * 如果需要返回数据，从data【0】 读取
- * 
+ * wait_time_50ms 表示等待50ms的整数倍【0-10000】
  * */
-int send_mcu_data(const void* data)
+int send_mcu_data(const void* data)//,unsigned int wait_time_50ms)
 {	
 	unsigned char buf[8];  	
 	int i;
+	uart_msgq_t msgbuf;
 	
 	buf[0] = FRAME_HEAD;  //Ö¡Í·	
 	memcpy(buf+1,data,sizeof(com_frame_t)-1);    //¿½±´
@@ -317,9 +325,18 @@ int send_mcu_data(const void* data)
 	// for(i=0;i<8;i++)
 	// 	printf("%#x ",buf[i]);
 	// printf("\n");
-	uart_recv_flag = 0;  //ÇåÀí½ÓÊÕ±êÖ¾
-	if(PortSend(uart_fd, buf, sizeof(com_frame_t)+1) == 0)   //com_frame_t²¢Ã»ÓÐ°üº¬Êý¾ÝÍ·£¬ËùÒÔ¼Ó1¸ö×Ö½Ú	
+	uart_recv_flag = 0;  //接收标志
+	if(PortSend(uart_fd, buf, sizeof(com_frame_t)+1) == 0)   //发送成功，等待应答	
 	{
+		//data[0] 作为接收的类型
+		if(Jc_uart_msgq_recv(((unsigned char*)data)[0],&msgbuf,20)==0)  //20表示1s
+		{
+			((unsigned char*)data)[0] = msgbuf.param;
+			return 0;  //表示收到数据
+		}
+#if 0
+		//多线程会有问题，2022-12-19		
+
 		i = 0;
 		//·¢ËÍ³É¹¦£¬µÈ´ýÓ¦´ð
 		while(uart_recv_flag == 0)
@@ -348,6 +365,7 @@ int send_mcu_data(const void* data)
 		}	
 				
 		return 0;   //ÔÝÊ±Ã»ÓÐµÈ´ýÓ¦´ð2021-11-23
+#endif
 	}
 	printf("Error, send_mcu_data PortSend failed\n");	
 	return -1;
@@ -466,6 +484,9 @@ int uart_init(int argc, char *argv[])
 	
 		exit(1);
 	}
+
+	//2022-12-19 做一个串口的消息队列，应对多线程的串口数据发送
+	Jc_uart_msgq_init();
 
 	return PortSet(uart_fd,baudrate,1,'N');    //设置波特率等	
 }

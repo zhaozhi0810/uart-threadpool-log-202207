@@ -10,4 +10,5 @@ obj-y += ComFunc.o
 #obj-y += queue.o
 obj-y += uart_to_mcu.o
 obj-y += uinput_dev.o
+obj-y += uart_ipc_msgq.o
 #obj-y += subdir/

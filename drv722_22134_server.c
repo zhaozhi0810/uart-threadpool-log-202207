@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-12-19 10:54:16
+* @Last Modified time: 2022-12-19 14:37:48
 */
 
 
@@ -348,7 +348,7 @@ void* api_answer_thread(void *arg)
 }
 
 
-//线程函数，处理snmp和API的请求
+//线程函数
 static void* msg_connect(void * data)
 {
 	int ret;
