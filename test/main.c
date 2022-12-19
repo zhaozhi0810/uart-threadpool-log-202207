@@ -88,18 +88,21 @@ static const char* g_build_time_str = "Buildtime :"__DATE__" "__TIME__;   //获�
 static bool s_main_thread_exit = false;
 static bool s_watchdog_feed_thread_exit = false;
 static 	pthread_t watchdog_feed_thread_id = 0;
-
+//static int is_watchdog_start = 0;  //0没有开启看门狗
 
 static void *s_watchdog_feed_thread(void *param) {
 	INFO("Start feed watchdog!");
 	unsigned int index = 0;
 	s_watchdog_feed_thread_exit = false;
 	while(!s_watchdog_feed_thread_exit) {
-		if(!(index % WATCHDOG_TIMEOUT)) {
-			drvWatchDogFeeding();
-			INFO("Watchdog feed success!");
-		}
-		index ++;
+		// if(is_watchdog_start)
+		// {
+			if(!(index % WATCHDOG_TIMEOUT)) {
+				drvWatchDogFeeding();
+				INFO("Watchdog feed success!");
+			}
+			index ++;
+		// }		
 		sleep(1);
 	}
 	INFO("Stop feed watchdog!");
@@ -561,6 +564,12 @@ static void printf_LCDmisc_menu(void)
 	printf("2. LCD屏幕重启\n");
 	printf("3. 调节屏幕亮度\n");
 	printf("4. 获取LCD屏幕类型\n");
+	printf("5. MICCTRL控制接口输出高\n");
+	printf("6. MICCTRL控制接口输出低\n");
+	printf("7. LSPK控制接口输出高\n");
+	printf("8. LSPK控制接口输出低\n");
+	printf("9. V12Crl控制接口输出高\n");
+	printf("10. V12Crl控制接口输出低\n");
 	printf("0. 退出测试程序\n");
 	printf("其他. 返回主菜单\n");
 }
@@ -618,14 +627,28 @@ static int LCDmisc_menu_control(void)
 				drvSetLcdBrt(nBrtVal);				
 			break;		
 			case 4:     //4. 获取LCD屏幕类型
-				type = drvGetLCDType();
-				if(type == 5 || type == 6) {
-					INFO("LCD model is %#x\n", type);
-				}
-				else {
-					ERR("Error drvGetLCDType %d\n", type);
-				}				
+				type = drvGetLCDType();				
+				INFO("LCD model is %#x\n", type);								
 				break;
+			case 5:     //5. MICCTRL控制接口输出高
+				drvSetMicCtrlStatus(1);								
+				break;
+			case 6:     //5. MICCTRL控制接口输出低
+				drvSetMicCtrlStatus(0);								
+				break;
+			case 7:     //7. LSPK控制接口输出高
+				drvSetLSPKOnOff(1);								
+				break;
+			case 8:     //8. LSPK控制接口输出低
+				drvSetLSPKOnOff(0);								
+				break;
+			case 9:     //9. V12Crl控制接口输出高
+				drvSetV12CrlOnOff(1);								
+				break;
+			case 10:     //10. V12Crl控制接口输出低
+				drvSetV12CrlOnOff(0);								
+				break;
+			
 			default:
 				break;
 		}		
@@ -859,17 +882,18 @@ int main(int args, char *argv[]) {
 		ERR("Error drvWatchdogSetTimeout!");
 	}
 
-	if(drvWatchDogEnable()) {
-		ERR("Error drvWatchDogEnable!");
-		drvCoreBoardExit();
-		return -1;
-	}
-	if(pthread_create(&watchdog_feed_thread_id, NULL, s_watchdog_feed_thread, NULL)) {
-		ERR("Error pthread_create with %d: %s\n", errno, strerror(errno));
-		drvWatchDogDisable();
-		drvCoreBoardExit();
-		return -1;
-	}
+	//2022-12-13 关闭看门狗使能
+	// if(drvWatchDogEnable()) {
+	// 	ERR("Error drvWatchDogEnable!");
+	// 	drvCoreBoardExit();
+	// 	return -1;
+	// }
+	// if(pthread_create(&watchdog_feed_thread_id, NULL, s_watchdog_feed_thread, NULL)) {
+	// 	ERR("Error pthread_create with %d: %s\n", errno, strerror(errno));
+	// 	drvWatchDogDisable();
+	// 	drvCoreBoardExit();
+	// 	return -1;
+	// }
 
 	while(!s_main_thread_exit) {
 		test_item_index = -1;

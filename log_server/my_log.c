@@ -110,11 +110,10 @@ static int delete_outdate_file(void)
 
 /*用定时器来处理硬盘同步信息*/
 void alarm_sig_handler(int signo) {
- 	printf( "debug signo = %d\n " ,signo);
-
+// 	printf( "debug signo = %d\n " ,signo);
  	if(signo == SIGALRM)
  	{
- 		alarm(30);   //30秒触发
+ 		alarm(300);   //300秒触发
  		if(log_fd>=0)    //文件是正常打开了，则刷新缓存
  			syncfs(log_fd);
  		else   //文件没有被打开，关闭定时器

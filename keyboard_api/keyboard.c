@@ -57,7 +57,7 @@ static void *s_recv_event_thread(void *arg) {
 	
 	//线程主循环
 	while(!s_recv_event_thread_exit) {
-	//	struct timeval timeout = {1, 0};
+	//	struct timeval timeout = {1, 0};	
 		FD_ZERO(&readfds);
 		FD_SET(event_dev_fd, &readfds);
 		FD_SET(gpio_event_dev_fd, &readfds);
@@ -77,7 +77,7 @@ static void *s_recv_event_thread(void *arg) {
 			if(ts.type == EV_KEY) {	
 			//	INFO("panel : Key %#x, value %#x", ts.code, ts.value);
 			//	printf("KEY_P = %d\n",KEY_P);
-				if((ts.code == KEY_P) && s_gpio_notify_func){  //对PTT按键特殊处理一下！！					
+				if((ts.code == KEY_P) && s_gpio_notify_func){  //对面板PTT按键特殊处理一下！！					
 					s_gpio_notify_func(ts.code, ts.value);					
 				//	printf("ptt1\n");
 				}
@@ -101,11 +101,11 @@ static void *s_recv_event_thread(void *arg) {
 					continue;
 			}
 			if(ts.type == EV_KEY) {
-				if(ts.code == KEY_A) //KEY_A == 30  hand PTT 按键值
-				{
-					//通知单片机，控制micctrl （PD6）引脚
-					api_handptt_change(ts.value);	
-				}
+				// if(ts.code == KEY_A) //KEY_A == 30  hand PTT 按键值
+				// {
+				// 	//通知单片机，控制micctrl （PD6）引脚
+				// 	api_handptt_change(ts.value);	
+				// }
 
 				//if(gpio_notify_func(ts.code, ts.value)) {
 				INFO("Key %#x, value %#x", ts.code, ts.value);

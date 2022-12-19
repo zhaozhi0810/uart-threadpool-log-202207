@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-10-18 19:52:55
+* @Last Modified time: 2022-12-19 10:54:16
 */
 
 
@@ -199,7 +199,7 @@ static void answer_to_api(msgq_t *pmsgbuf)
 			break;
 		case eAPI_LCDONOFF_CMD:  //lcd 打开关闭控制							
 			mcu_cmd_buf[0] = eMCU_LCD_SETONOFF_TYPE;  //设置lcd 打开或者关闭			
-			mcu_cmd_buf[1] = pmsgbuf->param2;   //打开1或者关闭0
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //打开1或者关闭0
 			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
 			break;
 		case eAPI_HWTD_SETONOFF_CMD:  //硬件看门狗的使能与禁止							
@@ -282,7 +282,11 @@ static void answer_to_api(msgq_t *pmsgbuf)
 			break;
 		case eAPI_RESET_LFBOARD_CMD: //,    //复位底板，好像没有这个功能！！！	
 			//nothing to do
-		break;
+			mcu_cmd_buf[0] = eMCU_RESET_LFBOARD_TYPE;  //设置所有的led pwm			
+		//	mcu_cmd_buf[1] = pmsgbuf->param1;   //无意义
+			send_mcu_data(mcu_cmd_buf);
+			msgbuf.ret = 0;
+			break;
 
 		case eAPI_MICCTRL_SETONOFF_CMD:  //控制底板mic_ctrl引脚的电平
 			mcu_cmd_buf[0] = eMCU_MICCTRL_SETONOFF_TYPE;  //设置所有的led pwm			
@@ -295,6 +299,27 @@ static void answer_to_api(msgq_t *pmsgbuf)
 			mcu_cmd_buf[0] = eMCU_LEDS_FLASH_TYPE;  //设置某一个led			
 			mcu_cmd_buf[1] = pmsgbuf->param1;   //设置某一个led
 			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+		break;
+
+		case eAPI_LSPK_SETONOFF_CMD:  //LSPK控制//,2022-11-11 1.3新版增加
+			mcu_cmd_buf[0] = eMCU_LSPK_SETONOFF_TYPE;  			
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //设置某一个值
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+		break;
+		case eAPI_V12_CTL_SETONOFF_CMD:  //V12_CTL控制//V12_CTL,2022-11-14 1.3新版增加
+			mcu_cmd_buf[0] = eMCU_V12_CTL_SETONOFF_TYPE;  			
+			mcu_cmd_buf[1] = pmsgbuf->param1;   //设置某一个值
+			msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+		break;
+		case eAPI_GET_LCDTYPE_CMD:  //上位机获得LCD类型的接口，之前是在3399，现在改为单片机实现，2022-12-12
+			mcu_cmd_buf[0] = eMCU_GET_LCDTYPE_TYPE;  			
+			mcu_cmd_buf[1] = 0;   //设置某一个led
+			//msgbuf.ret = send_mcu_data(mcu_cmd_buf);
+			if(0 == send_mcu_data(mcu_cmd_buf))  //返回值为0，表示收到了数据
+			{//获得mcu的数据？？
+				msgbuf.ret = 1; //表示又数据返回
+				msgbuf.param1 = mcu_cmd_buf[0];
+			}
 		break;
 
 		default:
@@ -367,8 +392,8 @@ static void* msg_connect(void * data)
 
 
 
-#define I2C_ADAPTER_DEVICE	"/dev/i2c-4"
-#define I2C_DEVICE_ADDR		(0x11)
+// #define I2C_ADAPTER_DEVICE	"/dev/i2c-4"
+// #define I2C_DEVICE_ADDR		(0x10)
 
 //设置pcm音量为某个值，val范围0-192.值越大，声音越小
 static void drvSetTuneVal(int val)
@@ -377,8 +402,8 @@ static void drvSetTuneVal(int val)
 		val = 192;
 	else if(val < 0)
 		val = 0;
-	CHECK(!s_write_reg(ES8388_DACCONTROL4, val), , "Error s_write_reg!");
-	CHECK(!s_write_reg(ES8388_DACCONTROL5, val), , "Error s_write_reg!");
+	CHECK(!s_write_reg(i2c_device_es8388_addr,ES8388_DACCONTROL4, val), , "Error s_write_reg!");
+	CHECK(!s_write_reg(i2c_device_es8388_addr,ES8388_DACCONTROL5, val), , "Error s_write_reg!");
 }
 
 //48.设置扬声器音量值 参数范围为[0,100]，通道2的左声道
@@ -386,7 +411,7 @@ static void drvSetSpeakVolume(int value)
 {
 	CHECK(value > 0 && value <= 100, , "Error value out of range!");
 	value = 0x21*value/100;
-	CHECK(!s_write_reg(ES8388_DACCONTROL26, value), , "Error s_write_reg!");
+	CHECK(!s_write_reg(i2c_device_es8388_addr,ES8388_DACCONTROL26, value), , "Error s_write_reg!");
 }
 
 // static const char* my_opt = "vhpwb:d:";
@@ -396,7 +421,8 @@ sure that you have inserted the uinput.ko into kernel. */
 int main(int argc, char *argv[]) 
 {
 	int t;
-	
+	int i2c_device_es8388_addr = -1;  //8388 iic设备地址
+	int es8388i2c_adapter_fd = -1;
 	printf("%s running,%s\n",argv[0],g_build_time_str);
 
 	if(argc == 2)
@@ -450,94 +476,38 @@ int main(int argc, char *argv[])
 	if(server_in_debug_mode)	
 		printf("ServerDEBUG: serverProcess uart init ok!!!\n");
 
-
-	int ret = i2c_adapter_init(I2C_ADAPTER_DEVICE, I2C_DEVICE_ADDR);
-	if(ret == 0) //不为0，表示出错！！
+	i2c_device_es8388_addr = es8388_find_iic_devaddr();
+	es8388i2c_adapter_fd = i2c_adapter_init(I2C_ADAPTER_ES8388, i2c_device_es8388_addr);
+	if(es8388i2c_adapter_fd < 0) //不为0，表示出错！！
 	{
 		drvSetTuneVal(1);  //设置pcm音量值，0-192，值越大声音越小
 		drvSetSpeakVolume(95); //设值扬声器音量值，0-100，值越大声音越大
 
 #if 1		
-		s_write_reg(0x3, 0xff);  //power off adc
-		s_write_reg(0x9, 0x11);   //0x88这个就是最大值
-		s_write_reg(0x26, 0x12);  
-		s_write_reg(0x27, 0xb8);
-		s_write_reg(0x2a, 0xb8);
-		s_write_reg(0x12, 0xea);   //ALC OFF
-		s_write_reg(0x13, 0xc0);
-		s_write_reg(0x14, 0x12);
-		s_write_reg(0x15, 0x06);
-		s_write_reg(0x16, 0xc3);
-		s_write_reg(0x04, 0xc0);  
-		s_write_reg(0x3, 0x09);  //power up adc
-#else
-		s_write_reg(ES8388_MASTERMODE, 0x00);
-		// Power down DEM and STM
-		s_write_reg(ES8388_CHIPPOWER, 0xFF);
-		// Set same LRCK	Set same LRCK
-		s_write_reg(ES8388_DACCONTROL21, 0x80);
-		// Set Chip to Play&Record Mode
-		s_write_reg(ES8388_CONTROL1, 0x05);
-		// Power Up Analog and Ibias
-		s_write_reg(ES8388_CONTROL2, 0x40);
-
-		/* ADC setting */
-		// Micbias for Record
-		s_write_reg(ES8388_ADCPOWER, 0x00);
-		// Enable Lin1/Rin1 (0x00 0x00) for Lin2/Rin2 (0x50 0x80)
-		s_write_reg(ES8388_ADCCONTROL2, 0x50);
-		s_write_reg(ES8388_ADCCONTROL3, 0x80);
-		// PGA gain (0x88 - 24db) (0x77 - 21db)
-		s_write_reg(ES8388_ADCCONTROL1, 0x77);
-		// SFI setting (i2s mode/16 bit)
-		s_write_reg(ES8388_ADCCONTROL4, 0x0C);
-		// ADC MCLK/LCRK ratio (256)
-		s_write_reg(ES8388_ADCCONTROL5, 0x02);
-		// set ADC digital volume
-		s_write_reg(ES8388_ADCCONTROL8, 0x00);
-		s_write_reg(ES8388_ADCCONTROL9, 0x00);
-		// recommended ALC setting for VOICE refer to ES8388 MANUAL
-		s_write_reg(ES8388_ADCCONTROL10, 0xEA);
-		s_write_reg(ES8388_ADCCONTROL11, 0xC0);
-		s_write_reg(ES8388_ADCCONTROL12, 0x12);
-		s_write_reg(ES8388_ADCCONTROL13, 0x06);
-		s_write_reg(ES8388_ADCCONTROL14, 0xC3);
-
-		/* DAC setting */
-		// Power Up DAC& enable Lout/Rout
-		s_write_reg(ES8388_DACPOWER, 0x3C);
-		// SFI setting (i2s mode/16 bit)
-		s_write_reg(ES8388_DACCONTROL1, 0x18);
-		// DAC MCLK/LCRK ratio (256)
-		s_write_reg(ES8388_DACCONTROL2, 0x02);
-		// unmute codec
-		s_write_reg(ES8388_DACCONTROL3, 0x00);
-		// set DAC digital volume
-		s_write_reg(ES8388_DACCONTROL4, 0x00);
-		s_write_reg(ES8388_DACCONTROL5, 0x00);
-		// Setup Mixer
-		// (reg[16] 1B mic Amp, 0x09 direct;[reg 17-20] 0x90 DAC, 0x50 Mic Amp)
-		s_write_reg(ES8388_DACCONTROL16, 0x09);
-		s_write_reg(ES8388_DACCONTROL17, 0x50);
-		s_write_reg(ES8388_DACCONTROL18, 0x38);  //??
-		s_write_reg(ES8388_DACCONTROL19, 0x38);  //??
-		s_write_reg(ES8388_DACCONTROL20, 0x50);
-		// set Lout/Rout Volume -45db
-		s_write_reg(ES8388_DACCONTROL24, 0x00);
-		s_write_reg(ES8388_DACCONTROL25, 0x00);
-		s_write_reg(ES8388_DACCONTROL26, 0x00);
-		s_write_reg(ES8388_DACCONTROL27, 0x00);
-
-		/* Power up DEM and STM */
-		s_write_reg(ES8388_CHIPPOWER, 0x00);
+		s_write_reg(es8388i2c_adapter_fd,0x3, 0xff);  //power off adc
+		s_write_reg(es8388i2c_adapter_fd,0x9, 0x11);   //0x88这个就是最大值
+		s_write_reg(es8388i2c_adapter_fd,0x26, 0x12);  
+		s_write_reg(es8388i2c_adapter_fd,0x27, 0xb8);
+		s_write_reg(es8388i2c_adapter_fd,0x2a, 0xb8);
+		s_write_reg(es8388i2c_adapter_fd,0x12, 0xea);   //ALC OFF
+		s_write_reg(es8388i2c_adapter_fd,0x13, 0xc0);
+		s_write_reg(es8388i2c_adapter_fd,0x14, 0x12);
+		s_write_reg(es8388i2c_adapter_fd,0x15, 0x06);
+		s_write_reg(es8388i2c_adapter_fd,0x16, 0xc3);
+		s_write_reg(es8388i2c_adapter_fd,0x04, 0xc0);  
+		s_write_reg(es8388i2c_adapter_fd,0x3, 0x09);  //power up adc
+		s_write_reg(es8388i2c_adapter_fd,0x30, 0x21);
+		s_write_reg(es8388i2c_adapter_fd,0x1a, 0x0);
+		s_write_reg(es8388i2c_adapter_fd,0x1b, 0x0);
+#else	
 #endif
 		
-		i2c_adapter_exit();
+		i2c_adapter_exit(es8388i2c_adapter_fd);
 		if(server_in_debug_mode)	
 			printf("ServerDEBUG: serverProcess Volume  set ok!!!\n");
 	}
 	else
-		printf("serverProcess: ERROR: i2c_adapter_init,Volume not set \n");
+		printf("serverProcess: ERROR: i2c_adapter_init failed!!!\n");
 	
 
 	//线程池初始化

@@ -66,7 +66,7 @@ static volatile	unsigned short uart_recv_flag = 0;   //串口收到单片机数�
 //串口数据接收处理
 static void com_message_handle(unsigned char* com_recv_data)
 {		
-	if(com_recv_data[1]>0 && com_recv_data[1] < 37)   //°´¼üÖµ
+	if(com_recv_data[1]>0 && com_recv_data[1] < 37)   //按键上报
 	{
 		printf("key = %d %s\n",com_recv_data[1],com_recv_data[2]?"press":"release");
 		send_a_button_ievent(com_recv_data[1]-1, com_recv_data[2]);
@@ -91,6 +91,9 @@ static void com_message_handle(unsigned char* com_recv_data)
 			case eMCU_RESET_LFBOARD_TYPE:    //复位底板，好像没有这个功能！！！
 			case eMCU_MICCTRL_SETONOFF_TYPE:  //控制底板mic_ctrl引脚的电平
 			case eMCU_LEDS_FLASH_TYPE:      //led键灯闪烁控制
+			case eMCU_LSPK_SETONOFF_TYPE: //LSPK,2022-11-11 1.3新版增加
+			case eMCU_V12_CTL_SETONOFF_TYPE:   //V12_CTL,2022-11-14 1.3新版增加
+			case eMCU_GET_LCDTYPE_TYPE:  //,   上位机获得LCD类型的接口，之前是在3399，现在改为单片机实现，2022-12-12
 				uart_recv_flag = com_recv_data[1] | (com_recv_data[2] <<8);  //¸ß8Î»±íÊ¾×´Ì¬		
 				break;
 			default:

@@ -32,7 +32,7 @@ enum API_CMD_types{
 	eAPI_LEDGETALL_CMD,      //获取所有的led
 	eAPI_BTNGET_CMD,         //获取按键（没有使用）
 	eAPI_BTNEVENT_CMD,       //等待按键事件（没有使用）
-	eAPI_LCDONOFF_CMD,       //lcd开启关闭事件
+	eAPI_LCDONOFF_CMD,       //lcd开启关闭事件，2022-12-13
 	eAPI_LEDSETPWM_CMD,      //led设置亮度
 	eAPI_BOART_TEMP_GET_CMD,  //获得单片机的温度
 	eAPI_CHECK_APIRUN_CMD,  //检测api是否已经运行
@@ -44,7 +44,12 @@ enum API_CMD_types{
 	eAPI_RESET_LCD_CMD,        //复位lcd 9211（复位引脚没有连通）
 	eAPI_RESET_LFBOARD_CMD,    //复位底板，好像没有这个功能！！！
 	eAPI_MICCTRL_SETONOFF_CMD,    //控制底板mic_ctrl引脚的电平
-	eAPI_LEDS_FLASH_CMD//,  // led键灯闪烁控制
+	eAPI_LEDS_FLASH_CMD ,  // led键灯闪烁控制
+	eAPI_LSPK_SETONOFF_CMD  , //LSPK,2022-11-11 1.3新版增加
+	eAPI_V12_CTL_SETONOFF_CMD ,  //V12_CTL,2022-11-14 1.3新版增加
+	eAPI_GET_LCDTYPE_CMD  ,  // 上位机获得LCD类型的接口，之前是在3399，现在改为单片机实现，2022-12-12
+	eAPI_SET_7INCHPWM_CMD    //7inch lcd的pwm值调整
+//	eAPI_5INLCD_SETONOFF_CMD  //,  //5寸背光使能控制，2022-12-13
 };
 
 

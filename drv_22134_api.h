@@ -180,16 +180,30 @@ void drvSelectHandMic(void);
 //61.选择耳机麦克风语音输入
 void drvSelectEarphMic(void);
 
-//打印编译时间
+//62.打印libso程序编译的时间
 void drvShowVersion(void);
-void drvCoreBoardExit(void);
-//nKeyIndex 表示某一个led，1-40有效，40表示所有的led
-//键灯led闪烁接口 (nKeyIndex：1-40)
+
+//63.MicCtrl引脚状态控制改变
+//status 非0表示MicCtrl输出高，0表示MicCtrl输出低
+//2022-12-13 modify by dazhi
+void drvSetMicCtrlStatus(int status);
+
+//64.键灯led闪烁接口 (nKeyIndex：1-40)
 //闪烁类型（0：500ms,1:800ms,2:1s:3:2s）
 void drvFlashLEDs(int nKeyIndex,unsigned char flash_type);
 
-//设置pcm音量为某个值，val范围0-192.值越大，声音越小
+//65. 设置LSPK : OnOff，Val：非0 --》on ，0--> off
+//2022-12-13 added by dazhi
+void drvSetLSPKOnOff(int Val);
+//66. 设置V12Crl : OnOff，Val：非0 --》on ，0--> off
+//2022-12-13 added by dazhi
+void drvSetV12CrlOnOff(int Val);
+
+
+//67.设置pcm音量为某个值，val范围0-192.值越大，声音越小
 void drvSetTuneVal(int val);
 
+//68. api退出函数
+void drvCoreBoardExit(void);  //API退出函数
 #endif
 
