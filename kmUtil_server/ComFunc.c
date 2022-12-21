@@ -14,11 +14,13 @@
 #include <stdlib.h>             // exit
 #include <sys/ioctl.h>          // ioctl
 #include <string.h>             // bzero
-
+#include <pthread.h>
 #include "ComFunc.h"
 
 
 #define bzero(a, b)             memset(a, 0, b)
+
+static pthread_mutex_t uart_write_mutex=PTHREAD_MUTEX_INITIALIZER;
 
 /*******************************************
  *	波特率转换函数（请确认是否正确）
@@ -228,19 +230,21 @@ int PortSend(int fdcom,unsigned char *data, unsigned char datalen)
 {
 	int len = 0;
 	int ret;
-     
+    pthread_mutex_lock(&uart_write_mutex); 
     do{    
     	ret =  write(fdcom, data+len, datalen-len);	
     	if(ret < 0)   //发送失败
 		{
+			printf("PortSend write error!\n");
+			pthread_mutex_unlock(&uart_write_mutex);
 			return -1;
 		}
 		len += ret;	//实际写入的长度
 		
-		if(len != datalen)
-			usleep(50000);
-	}while(len != datalen);
-
+		if(len < datalen)
+			usleep(5000);
+	}while(len < datalen);
+	pthread_mutex_unlock(&uart_write_mutex);
 	return 0;
 }
 
@@ -258,12 +262,7 @@ int PortRecv(int fdcom, unsigned char *data, unsigned char  datalen)
 {
 	int ret;
 	unsigned char readlen;
-//	fd_set	fs_read;
-//	struct timeval tv_timeout;
-//	int fdMax = 0;
 
-//	static int bytesNum=0;
-	 
 	if ( -1 == fdcom )
 	{
 		printf("error: PortRecv fdcom == -1\n");
@@ -279,7 +278,10 @@ int PortRecv(int fdcom, unsigned char *data, unsigned char  datalen)
 		ret = read(fdcom, data+readlen, datalen-readlen);
 //		printf("PortRecv read ret == %d\n",ret);
 		if(ret < 0)   //读取失败
+		{
+			printf("error: PortRecv read\n");
 			break;
+		}	
 
 		readlen += ret;				
 									

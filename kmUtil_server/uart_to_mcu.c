@@ -218,7 +218,7 @@ static void ProcRecvKeyCmd(void)
 //串口接收数据处理线程
 void* mcu_recvSerial_thread(void*arg)
 {
-	int readn=0, i=0,j;
+	int i=0,j,readn=0; //
 	unsigned char rBuf[COM_DATLEN*2]={0};
 	unsigned char datalen =COM_DATLEN,offset = 0;  //数据长度和缓存的偏移值
 #ifdef PRINT_DEBUG
@@ -312,7 +312,8 @@ void* mcu_recvSerial_thread(void* arg)
 int send_mcu_data(const void* data)//,unsigned int wait_time_50ms)
 {	
 	unsigned char buf[8];  	
-	int i;
+//	int i;
+	int ret;
 	uart_msgq_t msgbuf;
 	
 	buf[0] = FRAME_HEAD;  //Ö¡Í·	
@@ -325,8 +326,9 @@ int send_mcu_data(const void* data)//,unsigned int wait_time_50ms)
 	// for(i=0;i<8;i++)
 	// 	printf("%#x ",buf[i]);
 	// printf("\n");
-	uart_recv_flag = 0;  //接收标志
-	if(PortSend(uart_fd, buf, sizeof(com_frame_t)+1) == 0)   //发送成功，等待应答	
+	//uart_recv_flag = 0;  //接收标志
+	ret = PortSend(uart_fd, buf, sizeof(com_frame_t)+1) ;
+	if(ret == 0)   //发送成功，等待应答	
 	{
 		//data[0] 作为接收的类型
 		if(Jc_uart_msgq_recv(((unsigned char*)data)[0],&msgbuf,20)==0)  //20表示1s
@@ -334,6 +336,8 @@ int send_mcu_data(const void* data)//,unsigned int wait_time_50ms)
 			((unsigned char*)data)[0] = msgbuf.param;
 			return 0;  //表示收到数据
 		}
+		printf("PortSend recv time out !!cmd = %d\n",((unsigned char*)data)[0]);
+		return -1;
 #if 0
 		//多线程会有问题，2022-12-19		
 
@@ -367,7 +371,7 @@ int send_mcu_data(const void* data)//,unsigned int wait_time_50ms)
 		return 0;   //ÔÝÊ±Ã»ÓÐµÈ´ýÓ¦´ð2021-11-23
 #endif
 	}
-	printf("Error, send_mcu_data PortSend failed\n");	
+	printf("Error, send_mcu_data PortSend failed ret= %d\n",ret);	
 	return -1;
 }
 

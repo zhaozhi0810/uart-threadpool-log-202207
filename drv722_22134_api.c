@@ -124,6 +124,7 @@ int api_send_and_waitack(int cmd,int param1,int *param2)
 {
 	msgq_t msgbuf;  //用于应答
 	int ret;	
+
 	msgbuf.types = TYPE_API_SENDTO_SERVER;  //发送的信息类型
 	msgbuf.cmd = cmd;      //结构体赋值
 	msgbuf.param1 = param1;

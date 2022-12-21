@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 10:47:46
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-12-19 14:37:48
+* @Last Modified time: 2022-12-21 11:10:23
 */
 
 
@@ -391,7 +391,7 @@ static void* msg_connect(void * data)
 
 
 
-
+#if 0
 // #define I2C_ADAPTER_DEVICE	"/dev/i2c-4"
 // #define I2C_DEVICE_ADDR		(0x10)
 
@@ -413,7 +413,7 @@ static void drvSetSpeakVolume(int value)
 	value = 0x21*value/100;
 	CHECK(!s_write_reg(i2c_device_es8388_addr,ES8388_DACCONTROL26, value), , "Error s_write_reg!");
 }
-
+#endif
 // static const char* my_opt = "vhpwb:d:";
 
 /* This function will open the uInput device. Please make 
@@ -421,8 +421,8 @@ sure that you have inserted the uinput.ko into kernel. */
 int main(int argc, char *argv[]) 
 {
 	int t;
-	int i2c_device_es8388_addr = -1;  //8388 iic设备地址
-	int es8388i2c_adapter_fd = -1;
+//	int i2c_device_es8388_addr = -1;  //8388 iic设备地址
+//	int es8388i2c_adapter_fd = -1;
 	printf("%s running,%s\n",argv[0],g_build_time_str);
 
 	if(argc == 2)
@@ -476,14 +476,23 @@ int main(int argc, char *argv[])
 	if(server_in_debug_mode)	
 		printf("ServerDEBUG: serverProcess uart init ok!!!\n");
 
+
+	//2022-12-21 
+	// t = system("amixer set PCM 90% > /dev/null &");
+	// t = system("amixer set 'Output 1' 90% > /dev/null &");
+	// t = system("amixer set 'Output 2' 90% > /dev/null &");
+	// t = system("alsactl store > /dev/null &");
+	
+#if 0
 	i2c_device_es8388_addr = es8388_find_iic_devaddr();
+	printf("serverProcess: i2c_device_es8388_addr = %d\n",i2c_device_es8388_addr);
 	es8388i2c_adapter_fd = i2c_adapter_init(I2C_ADAPTER_ES8388, i2c_device_es8388_addr);
 	if(es8388i2c_adapter_fd < 0) //不为0，表示出错！！
 	{
 		drvSetTuneVal(1);  //设置pcm音量值，0-192，值越大声音越小
 		drvSetSpeakVolume(95); //设值扬声器音量值，0-100，值越大声音越大
 
-#if 1		
+		
 		s_write_reg(es8388i2c_adapter_fd,0x3, 0xff);  //power off adc
 		s_write_reg(es8388i2c_adapter_fd,0x9, 0x11);   //0x88这个就是最大值
 		s_write_reg(es8388i2c_adapter_fd,0x26, 0x12);  
@@ -499,16 +508,15 @@ int main(int argc, char *argv[])
 		s_write_reg(es8388i2c_adapter_fd,0x30, 0x21);
 		s_write_reg(es8388i2c_adapter_fd,0x1a, 0x0);
 		s_write_reg(es8388i2c_adapter_fd,0x1b, 0x0);
-#else	
-#endif
+
 		
 		i2c_adapter_exit(es8388i2c_adapter_fd);
 		if(server_in_debug_mode)	
 			printf("ServerDEBUG: serverProcess Volume  set ok!!!\n");
 	}
 	else
-		printf("serverProcess: ERROR: i2c_adapter_init failed!!!\n");
-	
+		printf("serverProcess: ERROR: i2c_init es8388 failed!!!\n");	
+#endif	
 
 	//线程池初始化
 	pool = threadpool_init(4,6);  //初始有多少线程，最多有多少任务排队

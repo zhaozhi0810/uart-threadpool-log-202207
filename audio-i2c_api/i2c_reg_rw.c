@@ -35,7 +35,10 @@ int i2c_adapter_init(char *i2c_adapter_file, int i2c_device_addr) {
 		return 0;
 
 	if(i2c_device_addr<0)  //iic的设备地址不能小于0，2022-12-19增加
+	{
+		printf("i2c_adapter_init i2c_device_addr<0\n");
 		return -1;
+	}	
 
 	CHECK(i2c_adapter_file, -1, "Error i2c_adapter_file is null!");
 	CHECK(i2c_device_addr >= 0 && i2c_device_addr <= (0xff>>1), -1, "Error i2c_device_addr out of range!");
@@ -144,7 +147,7 @@ int es8388_find_iic_devaddr(void)
 
 	
 	if((dir = opendir("/sys/bus/i2c/drivers/ES8388")) == NULL) {  
-		printf("opendir failed!");
+		printf("opendir ...../ES8388 failed!");
 		return -1;
 	}
 	while((file = readdir(dir))) {

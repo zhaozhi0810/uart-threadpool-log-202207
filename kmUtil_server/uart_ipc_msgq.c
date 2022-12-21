@@ -2,7 +2,7 @@
 * @Author: dazhi
 * @Date:   2022-07-27 09:57:14
 * @Last Modified by:   dazhi
-* @Last Modified time: 2022-12-19 15:38:56
+* @Last Modified time: 2022-12-19 19:45:07
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -126,6 +126,9 @@ int Jc_uart_msgq_recv(long types,uart_msgq_t *msgbuf,unsigned int timeout_50ms)
 	    	fflush(stdout);
 	    	return -ENOMSG;
 	    }	
+
+	    if(timeout_50ms == 0) //这种情况应该直接退出了。
+	    	break;
 
 	    usleep(50000);   //休眠50ms	   
     }while(--timeout_50ms);
