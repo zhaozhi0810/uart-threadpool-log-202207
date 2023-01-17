@@ -48,7 +48,8 @@ enum API_CMD_types{
 	eAPI_LSPK_SETONOFF_CMD  , //LSPK,2022-11-11 1.3新版增加
 	eAPI_V12_CTL_SETONOFF_CMD ,  //V12_CTL,2022-11-14 1.3新版增加
 	eAPI_GET_LCDTYPE_CMD  ,  // 上位机获得LCD类型的接口，之前是在3399，现在改为单片机实现，2022-12-12
-	eAPI_SET_7INCHPWM_CMD    //7inch lcd的pwm值调整
+	eAPI_SET_7INCHPWM_CMD ,  //7inch lcd的pwm值调整
+	eAPI_GET_MCUVERSION_CMD   //获取单片机版本，2023-01-15
 //	eAPI_5INLCD_SETONOFF_CMD  //,  //5寸背光使能控制，2022-12-13
 };
 

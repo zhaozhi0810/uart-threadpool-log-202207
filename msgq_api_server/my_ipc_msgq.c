@@ -144,6 +144,8 @@ int Jc_msgq_recv(long types,msgq_t *msgbuf,unsigned int timeout_50ms)
 
 
 
+
+
 //发送消息，并且要等待应答。
 ////参数 timeout 大于0时，设置接收应答超时时间（50ms的整数倍），等于0表示阻塞模式
 //     ack_types 指定应答的类型，之前是TYPE_RECV+cmd

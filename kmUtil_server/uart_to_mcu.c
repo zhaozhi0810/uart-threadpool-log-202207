@@ -98,6 +98,7 @@ static void com_message_handle(unsigned char* com_recv_data)
 			case eMCU_LSPK_SETONOFF_TYPE: //LSPK,2022-11-11 1.3新版增加
 			case eMCU_V12_CTL_SETONOFF_TYPE:   //V12_CTL,2022-11-14 1.3新版增加
 			case eMCU_GET_LCDTYPE_TYPE:  //,   上位机获得LCD类型的接口，之前是在3399，现在改为单片机实现，2022-12-12
+			case eMCU_GET_MCUVERSION_TYPE:
 				msgbuf.types = com_recv_data[1];  //这个是命令
 				msgbuf.param = com_recv_data[2];  //这个是数据
 				//uart_recv_flag = com_recv_data[1] | (com_recv_data[2] <<8);  //¸ß8Î»±íÊ¾×´Ì¬		
@@ -309,27 +310,25 @@ void* mcu_recvSerial_thread(void* arg)
  * 如果需要返回数据，从data【0】 读取
  * wait_time_50ms 表示等待50ms的整数倍【0-10000】
  * */
-int send_mcu_data(const void* data)//,unsigned int wait_time_50ms)
+int send_mcu_data(const void* data,int isreply)//,unsigned int wait_time_50ms)
 {	
 	unsigned char buf[8];  	
 //	int i;
 	int ret;
 	uart_msgq_t msgbuf;
 	
-	buf[0] = FRAME_HEAD;  //Ö¡Í·	
-	memcpy(buf+1,data,sizeof(com_frame_t)-1);    //¿½±´
+	buf[0] = FRAME_HEAD;  //帧头	
+	memcpy(buf+1,data,sizeof(com_frame_t)-1);    //数据中没有帧头
 
-	//crcÖØÐÂ¼ÆËã
-	buf[sizeof(com_frame_t)] = checksum(buf,sizeof(com_frame_t));  //Ð£ÑéºÍ£¬´æ´¢ÔÚµÚ7¸ö×Ö½ÚÉÏ£¬Êý×éÏÂ±ê6.
-
-//	printf(PRINT_CPUTOMCU);
-	// for(i=0;i<8;i++)
-	// 	printf("%#x ",buf[i]);
-	// printf("\n");
-	//uart_recv_flag = 0;  //接收标志
+	buf[sizeof(com_frame_t)] = checksum(buf,sizeof(com_frame_t));  //计算校验和
 	ret = PortSend(uart_fd, buf, sizeof(com_frame_t)+1) ;
 	if(ret == 0)   //发送成功，等待应答	
 	{
+		if(!isreply) //不需要应答
+		{
+			return 0;
+		}
+	
 		//data[0] 作为接收的类型
 		if(Jc_uart_msgq_recv(((unsigned char*)data)[0],&msgbuf,20)==0)  //20表示1s
 		{
@@ -338,38 +337,6 @@ int send_mcu_data(const void* data)//,unsigned int wait_time_50ms)
 		}
 		printf("PortSend recv time out !!cmd = %d\n",((unsigned char*)data)[0]);
 		return -1;
-#if 0
-		//多线程会有问题，2022-12-19		
-
-		i = 0;
-		//·¢ËÍ³É¹¦£¬µÈ´ýÓ¦´ð
-		while(uart_recv_flag == 0)
-		{
-			usleep(100);   //100us
-			i++;
-			
-			if(i>10000)  //等待1s
-			{
-				uart_recv_flag = 0;  //超时清零
-				printf("Error, send_mcu_data recv timeout !!cmd = %d\n",((unsigned char*)data)[0]);	
-				return -1;
-			}
-		}
-				
-		if((uart_recv_flag &0xff) == ((unsigned char*)data)[0])   //·¢ËÍµÄÃüÁîÓë·µ»ØµÄÃüÁîÏàÍ¬
-		{
-			((unsigned char*)data)[0] = uart_recv_flag>>8;   //¸ß8Î»±íÊ¾×´Ì¬£¬°Ñ×´Ì¬Öµ·µ»Ø»ØÈ¥
-			uart_recv_flag = 0;  //ÇåÁã½ÓÊÕ±êÖ¾
-		}
-		else
-		{
-			printf("Error, send_mcu_data recv uart_recv_flag =%d != cmd = %d\n",uart_recv_flag,((unsigned char*)data)[0]);
-			uart_recv_flag = 0;  //ÇåÁã½ÓÊÕ±êÖ¾
-			return -1;	
-		}	
-				
-		return 0;   //ÔÝÊ±Ã»ÓÐµÈ´ýÓ¦´ð2021-11-23
-#endif
 	}
 	printf("Error, send_mcu_data PortSend failed ret= %d\n",ret);	
 	return -1;

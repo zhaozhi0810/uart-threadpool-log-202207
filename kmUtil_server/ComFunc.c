@@ -242,7 +242,10 @@ int PortSend(int fdcom,unsigned char *data, unsigned char datalen)
 		len += ret;	//实际写入的长度
 		
 		if(len < datalen)
-			usleep(5000);
+		{
+		//	printf("2023 PortSend len = %d\n",len);
+			usleep(5);
+		}
 	}while(len < datalen);
 	pthread_mutex_unlock(&uart_write_mutex);
 	return 0;
@@ -276,13 +279,11 @@ int PortRecv(int fdcom, unsigned char *data, unsigned char  datalen)
 	
 	do{
 		ret = read(fdcom, data+readlen, datalen-readlen);
-//		printf("PortRecv read ret == %d\n",ret);
 		if(ret < 0)   //读取失败
 		{
 			printf("error: PortRecv read\n");
 			break;
 		}	
-
 		readlen += ret;				
 									
 	}while(readlen != datalen);	//读到的字节不够

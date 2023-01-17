@@ -48,22 +48,22 @@ static void *s_recv_event_thread(void *arg) {
 	struct input_event ts;
 	int max_fd = 0;
 
-	CHECK((gpio_event_dev_fd = open(gpio_event_dev, O_RDONLY)) > 0, NULL, "Error open with %d: %s", errno, strerror(errno));
-	CHECK((event_dev_fd = open(event_dev_name, O_RDONLY, 0)) > 0, NULL, "Error open with %d: %s", errno, strerror(errno));
+	CHECK((gpio_event_dev_fd = open(gpio_event_dev, O_RDONLY)) > 0, NULL, "Error open %s with %d: %s", gpio_event_dev,errno, strerror(errno));
+	CHECK((event_dev_fd = open(event_dev_name, O_RDONLY, 0)) > 0, NULL, "Error open %s with %d: %s", event_dev_name,errno, strerror(errno));
 	max_fd = event_dev_fd;
 	if(gpio_event_dev_fd > max_fd)
 		max_fd = gpio_event_dev_fd;
 	INFO("Enter %s", __func__);
 	
 	//线程主循环
-	while(!s_recv_event_thread_exit) {
+	while(1) {  //!s_recv_event_thread_exit
 	//	struct timeval timeout = {1, 0};	
 		FD_ZERO(&readfds);
 		FD_SET(event_dev_fd, &readfds);
 		FD_SET(gpio_event_dev_fd, &readfds);
 		if(select(max_fd + 1, &readfds, NULL, NULL, NULL) < 0) {   //不需要超时设置，阻塞型
-			ERR("Error select with %d: %s", errno, strerror(errno));
-			s_recv_event_thread_exit = true;
+		//	ERR("Error select with %d: %s", errno, strerror(errno));
+		//	s_recv_event_thread_exit = true;
 		}
 		else if(FD_ISSET(event_dev_fd, &readfds)) {			
 		//	printf("s_recv_event_thread event_dev_fd\n");
@@ -76,11 +76,12 @@ static void *s_recv_event_thread(void *arg) {
 			}
 			if(ts.type == EV_KEY) {	
 			//	INFO("panel : Key %#x, value %#x", ts.code, ts.value);
-			//	printf("KEY_P = %d\n",KEY_P);
-				if((ts.code == KEY_P) && s_gpio_notify_func){  //对面板PTT按键特殊处理一下！！					
-					s_gpio_notify_func(ts.code, ts.value);					
+				if((ts.code == KEY_P)){  //对面板PTT按键特殊处理一下！！					
+					if(s_gpio_notify_func)
+						s_gpio_notify_func(ts.code, ts.value);					
 				//	printf("ptt1\n");
 				}
+				
 				else //除了PTT以外的按键
 				{
 					if(s_key_notify_func) {
@@ -110,6 +111,19 @@ static void *s_recv_event_thread(void *arg) {
 				//if(gpio_notify_func(ts.code, ts.value)) {
 				INFO("Key %#x, value %#x", ts.code, ts.value);
 				//}
+
+				if((ts.code == KEY_A)){  //手柄ptt，发指令给单片机，打开morse					
+					if(ts.value)
+					{
+						drvSetV12CrlOnOff(1);					
+						printf("drvSetV12CrlOnOff(1)\n");
+					}
+					else
+					{
+						drvSetV12CrlOnOff(0);					
+						printf("drvSetV12CrlOnOff(0)\n");
+					}
+				}
 
 				if(s_gpio_notify_func)
 				{

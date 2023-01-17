@@ -205,5 +205,11 @@ void drvSetTuneVal(int val);
 
 //68. api退出函数
 void drvCoreBoardExit(void);  //API退出函数
+
+
+//69. 显示单片机的版本【0-255】
+int drvShowMcuVersion(void);  //显示单片机的版本
+
+
 #endif
 

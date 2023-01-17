@@ -188,29 +188,6 @@ static int MicCtrl_PinInit(void)
 		printf("ERROR: gpio_direction_set MicCtrl_pin = %d\n",MicCtrl_pin);
 	//	return -1;
 	}
-	// KeyboardTypepins[0] = get_pin(RK_GPIO2,RK_PB1);
-	// KeyboardTypepins[1] = get_pin(RK_GPIO2,RK_PD2);
-	// KeyboardTypepins[2] = get_pin(RK_GPIO4,RK_PC7);
-
-//	printf("debug: pins = %d %d %d\n",KeyboardTypepins[0],KeyboardTypepins[1],KeyboardTypepins[2]);
-
-
-	// if(gpio_direction_set(KeyboardTypepins[0], GPIO_DIR_IN) == false)
-	// {
-	// 	printf("ERROR: getKeyboardTypePinInit gpio_direction_set pins[0]\n");
-	// 	return -1;
-	// }
-	// if(gpio_direction_set(KeyboardTypepins[1], GPIO_DIR_IN) == false)
-	// {
-	// 	printf("ERROR: getKeyboardTypePinInit gpio_direction_set pins[1]\n");
-	// 	return -1;
-	// }
-	// if(gpio_direction_set(KeyboardTypepins[2], GPIO_DIR_IN) == false)
-	// {
-	// 	printf("ERROR: getKeyboardTypePinInit gpio_direction_set pins[2]\n");
-	// 	return -1;
-	// }
-
 	inited = 1;   //初始化了！！！
 	return 0;
 }
@@ -281,34 +258,11 @@ static int start_server_process(void)
 //返回0，表示第一次启动API，否则为多次，则应该不允许启动
 static int isProcessRunning()
 {	
-#if 0
-    lock_fd = open("/tmp/drvApi22134.lock",O_CREAT|O_RDWR,0666);
-    if(lock_fd < 0)
-    {
-    	printf("ERROR: open /tmp/drvApi22134.lock\n");
-    	return -1;
-    }	
-    int rc = flock(lock_fd,LOCK_EX|LOCK_NB); //flock加锁，LOCK_EX -- 排它锁；LOCK_NB -- 非阻塞模式
-    if(rc)  //返回值非0，无法正常持锁
-    {
-        if(EWOULDBLOCK == errno)    //尝试锁住该文件的时候，发现已经被其他服务锁住,errno==EWOULDBLOCK
-        {
-        //	close(lock_fd);	
-            printf("API: Already Running!\n");
-            return -1; 
-        }
-    }
-    printf("API: Allow to Running!\n");
-//    close(lock_fd);	//不能关闭文件   
-    return 0;   //成功加锁。
-#else
     //2022-08-09改为Jc_msgq通信确认进程是否存在，发送pid过去
     pid_t pid;
     int ret = 0;   //参数需要一个指针，返回函数返回值
     pid = getpid();  //获得自己的pid
-//    printf("API pid = %d\n",pid);
-	// if(assert_init())  //未初始化
-	// 	return -1;
+    
 	//查询是否存在api进程，让服务进程查询
 	if(api_send_and_waitack(eAPI_CHECK_APIRUN_CMD,pid,&ret))  //发送的第二个参数表示pid，参数3用于返回结果，0表示没有启动API，1表示已经存在，-1表示出错
 	{
@@ -316,7 +270,7 @@ static int isProcessRunning()
 		return -1;
 	}
 	return ret;
-#endif    
+   
 }
 
 
@@ -377,7 +331,17 @@ int drvCoreBoardInit(void)
 		CoreBoardInit = -1;   //记录初始化失败
 		return ret;
 	}
+
+	//2023-01-12 默认手柄mic输入，音量调整，内部回环取消（0x26）
+	drvSelectHandMic();
+	s_write_reg(es8388i2c_adapter_fd, 0x1a, 0);
+	s_write_reg(es8388i2c_adapter_fd, 0x1b, 0);
+	s_write_reg(es8388i2c_adapter_fd, 0x26, 0x12);
+	s_write_reg(es8388i2c_adapter_fd, 0x12, 0x3a);
+
 	CoreBoardInit = 1;  //初始化成功
+	//drvSetV12CrlOnOff(1);
+		
 	return 0;
 }
 
@@ -393,19 +357,11 @@ void drvCoreBoardExit(void)
 	keyboard_exit();   //键盘处理线程退出
 	i2c_adapter_exit(es8388i2c_adapter_fd);  //iic的文件关闭
 	
-	// gpio_direction_unset(KeyboardTypepins[0]);
-	// gpio_direction_unset(KeyboardTypepins[1]);
-	// gpio_direction_unset(KeyboardTypepins[2]);
 	gpio_direction_unset(MicCtrl_pin);
 
 	Jc_msgq_exit();  //清除消息队列中的消息
 	CoreBoardInit = 0;   //未初始化了！！！
-
-	// if(lock_fd >= 0)   //文件被打开，则关闭
-	// {
-	// 	close(lock_fd);
-	// 	lock_fd = -1;
-	// }	
+	
 	exited = 1;   //已经执行过该函数
 	return;
 }
@@ -531,21 +487,13 @@ void drvEnableSpeaker(void)
 //9. 关闭强声器  //3399的AG4管脚置1  //接口板芯片U5的2脚
 void drvDisableWarning(void)
 {
-	//通道2右声道 是否是音量调为0？
-	unsigned char val = 0;
-	CHECK(!s_read_reg(es8388i2c_adapter_fd,ES8388_DACPOWER, &val), , "Error s_read_reg!");
-	val &= ~(0x1 << 1);
-	CHECK(!s_write_reg(es8388i2c_adapter_fd,ES8388_DACPOWER, val), , "Error s_write_reg!");
+	drvSetLSPKOnOff(0);
 }
 
 //10. 打开强声器  //3399的AG4管脚置0
 void drvEnableWarning(void)
 {
-	//通道2右声道 是否是音量调为80？
-	unsigned char val = 0;
-	CHECK(!s_read_reg(es8388i2c_adapter_fd,ES8388_DACPOWER, &val), , "Error s_read_reg!");
-	val |= (0x1 << 3);
-	CHECK(!s_write_reg(es8388i2c_adapter_fd,ES8388_DACPOWER, val), , "Error s_write_reg!");	
+	drvSetLSPKOnOff(1);
 }
 
 //11. 使能USB0  //3399的管脚AL4置0   //暂时未引到接口板，无法测量
@@ -680,24 +628,6 @@ int getKeyboardType(void)
 		printf("error : getKeyboardType \n");
 	}
 
-
-
-#if 0    //v1.3版本改为单片机识别了！！
-	GPIO_LEVEL level[3];
-	if(CoreBoardInit != 1) //没有初始化
-		return -1;
-
-	if(KeyboardTypepins[0]<0 || gpio_level_read(KeyboardTypepins[0], level)==false)
-		return -1;
-	if(KeyboardTypepins[1]<0 || gpio_level_read(KeyboardTypepins[1], level+1)==false)
-		return -1;
-	if(KeyboardTypepins[2]<0 || gpio_level_read(KeyboardTypepins[2], level+2)==false)
-		return -1;
-
-	result |= (level[0] == GPIO_LEVEL_HIGH)?1:0;
-	result |= (level[1] == GPIO_LEVEL_HIGH)?2:0;
-	result |= (level[2] == GPIO_LEVEL_HIGH)?4:0;
-#endif
 	return result;
 }
 
@@ -758,7 +688,7 @@ float drvGetBoardTemp(void)
 	int param = 0;   //参数需要一个指针，返回函数返回值
 	if(assert_init())  //未初始化
 		return 0.0;
-//	MY_PRINTF("nothing todo 2022-07-27\n");
+
 	//改为从单片机获得温度
 	if(api_send_and_waitack(eAPI_BOART_TEMP_GET_CMD,0,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
 	{
@@ -767,9 +697,6 @@ float drvGetBoardTemp(void)
 	}
 	printf("drvGetBoardTemp param = %d\n",param);
 	return param;   //返回的温度只有整数部分！！
-
-	//nothing todo 2022-07-27	
-	//return 0.0;
 }
 
 //23. 获取当前RTC值
@@ -915,7 +842,6 @@ void drvDimAllLED(void)
 	{
 		printf("error : drvDimAllLED \n");
 	}
-
 }
 
 //31. 获取对应键灯状态
@@ -1326,12 +1252,6 @@ void drvShowVersion(void)
 //2022-12-13 modify by dazhi
 void drvSetMicCtrlStatus(int status)
 {
-	// int param = status;
-	// if(assert_init())  //未初始化
-	// 	return;
-	//改为3399控制，2022-12-13
-//	printf("api_handptt_change\n");
-	//MicCtrl_pin
 	if(status)   //根据情况调整
 		status = GPIO_LEVEL_HIGH;
 	else 
@@ -1340,13 +1260,6 @@ void drvSetMicCtrlStatus(int status)
 
 	if(MicCtrl_pin < 0 || gpio_level_set(MicCtrl_pin, status)==false)
 		return ;
-
-#if 0    //已经改为3399自身引脚控制，2022-12-12
-	if(api_send_and_waitack(eAPI_MICCTRL_SETONOFF_CMD,status,NULL))  //发送的第二个参数ptt当前状态，第三个参数无意义
-	{
-		printf("error : api_handptt_change ,status = %d\n",status);
-	}
-#endif
 }
 
 
@@ -1420,3 +1333,26 @@ void drvSetTuneVal(int val)
 	CHECK(!s_write_reg(es8388i2c_adapter_fd,ES8388_DACCONTROL4, val), , "Error s_write_reg!");
 	CHECK(!s_write_reg(es8388i2c_adapter_fd,ES8388_DACCONTROL5, val), , "Error s_write_reg!");
 }
+
+
+
+//69. 显示单片机的版本【0-255】
+int drvShowMcuVersion(void)//显示单片机的版本
+{
+	int param = 0;   //参数需要一个指针，返回函数返回值
+	if(assert_init())  //未初始化
+		return -1;
+
+	if(api_send_and_waitack(eAPI_GET_MCUVERSION_CMD,0,&param))  //发送的第二个参数表示led号，第三个表示点亮还是熄灭
+	{
+		printf("error : drvGetBoardTemp \n");
+		return -1;
+	}
+	printf("drvShowMcuVersion param = %d\n",param);
+	return param;   //返回的温度只有整数部分！！	
+
+}
+
+
+
+

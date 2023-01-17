@@ -358,9 +358,11 @@ static void printf_key_lights_menu(void)
 	printf("1. 获取面板键灯的状态\n");
 	printf("2. 设置对应键灯点亮\n");
 	printf("3. 设置对应键灯熄灭\n");
-	printf("4. 获取键灯类型\n");
-	printf("5. 设置键灯闪烁\n");
-	printf("6. 设置键灯亮度\n");
+	printf("4. 设置所有键灯点亮\n");
+	printf("5. 设置所有键灯熄灭\n");
+	printf("6. 获取键灯类型\n");
+	printf("7. 设置键灯闪烁\n");
+	printf("8. 设置键灯亮度\n");
 	printf("0. 退出测试程序\n");
 	printf("其他. 返回主菜单\n");
 }
@@ -418,10 +420,18 @@ static int key_lights_menu_control(void)
 				}
 				drvDimLED(KeyIndex);
 				break;
-			case 4:     //4. 获取键灯类型				
+			case 4:
+				INFO("drvLightAllLED");
+				drvLightAllLED();
+			break;
+			case 5:
+				INFO("drvDimAllLED");
+				drvDimAllLED();
+			break;
+			case 6:     //4. 获取键灯类型				
 				INFO("Keyboard model is %#x\n", getKeyboardType());			
 				break;
-			case 5:  //5. 设置键灯闪烁
+			case 7:  //5. 设置键灯闪烁
 				INFO("Please input KeyIndex: (%u-%u)", KEY_VALUE_MIN, KEY_VALUE_MAX);
 				if((KeyIndex = get_stdin_a_num()) == -1) {//if(scanf("%d", &KeyIndex) != 1) {
 					ERR("您的输入有误，请重新输入\n");
@@ -438,7 +448,7 @@ static int key_lights_menu_control(void)
 				}
 				drvFlashLEDs(KeyIndex,nBrtVal);
 				break;
-			case 6:  //6. 设置键灯亮度
+			case 8:  //6. 设置键灯亮度
 				nBrtVal = 0;
 				INFO("Please input brightness: (%u-%u)\n", PANEL_KEY_BRIGHTNESS_MIN, PANEL_KEY_BRIGHTNESS_MAX);
 				if((nBrtVal = get_stdin_a_num()) == -1) {//if(scanf("%d", &nBrtVal) != 1) {
@@ -854,6 +864,7 @@ static void printf_main_menu(void)
 	printf("5. LCD控制功能：屏幕点亮熄灭，屏幕重启，屏幕类型获取\n");
 	printf("6. 重启核心板\n");
 	printf("7. 查看测试程序编译的时间\n");
+	printf("8. 查看MCU程序版本\n");
 	printf("9. 未实现功能：USB控制，电压读取，触摸屏功能，重启按键板\n");
 	printf("0. 测试程序退出\n");
 	printf("其他. 打印该帮助信息\n");
@@ -938,6 +949,16 @@ int main(int args, char *argv[]) {
 			case 7:      //7. 查看测试程序编译的时间
 				printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
 				drvShowVersion();
+				break;
+			case 8: {     //8. 查看MCU程序版本
+				int version = drvShowMcuVersion();
+				if(version >= 0)
+					printf("Mcu Version = %.2f\n",version/100.0);
+				else
+					printf("ERROR: get Mcu Version\n");
+			//	printf("%s running,Buildtime %s\n",argv[0],g_build_time_str);
+			//	drvShowVersion();
+				}
 				break;
 			case 9:      //9. 未实现功能：USB控制，电压读取，触摸屏功能，重启按键板
 				if(!Unrealized_menu_control())  //返回0 程序退出
