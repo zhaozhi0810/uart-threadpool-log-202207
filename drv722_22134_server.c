@@ -386,7 +386,7 @@ int main(int argc, char *argv[])
 	int t;
 	int log_enable = 0;   //不开启日志
 //	int i2c_device_es8388_addr = -1;  //8388 iic设备地址
-//	int es8388i2c_adapter_fd = -1;
+	int es8388i2c_adapter_fd = -1;
 	printf("%s running,%s\n",argv[0],g_build_time_str);
 
 	if(argc >= 2)  //只判断两个参数中的第二个，其他参数不判断
@@ -428,6 +428,33 @@ int main(int argc, char *argv[])
 		}
 #endif
 	}
+
+	//8388 初始化
+
+	es8388i2c_adapter_fd = i2c_adapter_init(I2C_ADAPTER_ES8388, 0x10);
+	if(es8388i2c_adapter_fd < 0) //不为0，表示出错！！
+	{
+		printf("ERROR:es8388_0x10 i2c_adapter_init ret = %d\n",es8388i2c_adapter_fd);
+	//	CoreBoardInit = -1;   //记录初始化失败
+	//	return ret;
+		es8388i2c_adapter_fd = i2c_adapter_init(I2C_ADAPTER_ES8388, 0x11);
+		if(es8388i2c_adapter_fd < 0) //不为0，表示出错！！
+		{
+			printf("ERROR:es8388_0x11 i2c_adapter_init ret = %d\n",es8388i2c_adapter_fd);
+		}
+	}
+	if(es8388i2c_adapter_fd > 0)
+	{
+		s_write_reg(es8388i2c_adapter_fd, 0x1a, 0);
+		s_write_reg(es8388i2c_adapter_fd, 0x1b, 0);
+		s_write_reg(es8388i2c_adapter_fd, 0x26, 0x12);
+		s_write_reg(es8388i2c_adapter_fd, 0x12, 0x3a);
+		s_write_reg(es8388i2c_adapter_fd, 0x3, 0x08);    //2023-03-16
+		close(es8388i2c_adapter_fd);
+	}
+	
+
+	
 	
 	//串口通信	
 	if(0 != uart_init(argc, argv))

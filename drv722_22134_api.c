@@ -280,7 +280,7 @@ static int isProcessRunning()
 int drvCoreBoardInit(void)
 {
 	int ret ;
-	int es8388_iic_addr  = -1;  //2022-12-16
+//	int es8388_iic_addr  = -1;  //2022-12-16
 
 	if(CoreBoardInit == 1)  //已经初始化了
 		return 0;
@@ -312,15 +312,16 @@ int drvCoreBoardInit(void)
 		return ret;
 	}
 
-	es8388_iic_addr = es8388_find_iic_devaddr();  //函数在i2c_reg_rw.c
-	if(es8388_iic_addr > 0)
+	es8388i2c_adapter_fd = i2c_adapter_init(I2C_ADAPTER_ES8388, 0x10);
+	if(es8388i2c_adapter_fd < 0) //不为0，表示出错！！
 	{
-		es8388i2c_adapter_fd = i2c_adapter_init(I2C_ADAPTER_ES8388, es8388_iic_addr);
+		printf("ERROR:api es8388_0x10 i2c_adapter_init ret = %d\n",es8388i2c_adapter_fd);
+	//	CoreBoardInit = -1;   //记录初始化失败
+	//	return ret;
+		es8388i2c_adapter_fd = i2c_adapter_init(I2C_ADAPTER_ES8388, 0x11);
 		if(es8388i2c_adapter_fd < 0) //不为0，表示出错！！
 		{
-			DBG_PRINTF("ERROR: i2c_adapter_init ret = %d\n",ret);
-			CoreBoardInit = -1;   //记录初始化失败
-			return ret;
+			printf("ERROR:api es8388_0x11 i2c_adapter_init ret = %d\n",es8388i2c_adapter_fd);
 		}
 	}
 
@@ -338,6 +339,7 @@ int drvCoreBoardInit(void)
 	s_write_reg(es8388i2c_adapter_fd, 0x1b, 0);
 	s_write_reg(es8388i2c_adapter_fd, 0x26, 0x12);
 	s_write_reg(es8388i2c_adapter_fd, 0x12, 0x3a);
+	s_write_reg(es8388i2c_adapter_fd, 0x3, 0x08);    //2023-03-16
 
 	CoreBoardInit = 1;  //初始化成功
 	//drvSetV12CrlOnOff(1);
@@ -1077,8 +1079,19 @@ void drvSetSpeakVolume(int value)
 	CHECK(value > 0 && value <= 100, , "Error value out of range!");
 	// unsigned char val = 0;
 	// unsigned char val_max = 0x21;
-	value = 0x21*value/100;
 
+//	if(value > 50)   //2023-03-07,进行了一些调整
+//	{
+//		value = 8*(value-50)/50 + 25;
+//	}
+//	else{	
+//		value = 25*value/50;
+//	}
+
+
+	value = 13*(value)/100 + 20;
+
+	
 	//CHECK(!s_read_reg(ES8388_DACCONTROL26, &val), , "Error s_read_reg!");
 	//val -= val_step;
 	//val = (val < 0)? 0:val;
